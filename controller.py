@@ -136,42 +136,24 @@ def mode_from_inputs(inputs):
 
 
 def checkMaxVal(val,maxX,maxY,zBounds,maxA,maxB,maxC):
-        # Maximale x-Richtung
-    if val[0] > maxX:
-        val[0] = maxX
-    if val[0] < -maxX:
-        val[0] = -maxX
+    # Maximale x-Richtung
+    val[0] = max(min(val[0], maxX), -maxX)
 
-        # Maximale y-Richtung
-    if val[1] > maxY:
-        val[1] = maxY
-    if val[1] < -maxY:
-        val[1] = -maxY
+    # Maximale y-Richtung
+    val[1] = max(min(val[1], maxY), -maxY)
 
-        # Maximale z-Richtung
-    if val[2] > zBounds[1]:
-        val[2] = zBounds[1]
-    if val[2] < zBounds[0]:
-        val[2] = zBounds[0]
+    # Maximale z-Richtung
+    val[2] = max(min(val[2], zBounds[1]), zBounds[0])
 
-        # Maximale a-Richtung
-    if val[3] > maxA:
-        val[3] = maxA
-    if val[3] < -maxA:
-        val[3] = -maxA
+    # Maximale a-Richtung
+    val[3] = max(min(val[3], maxA), -maxA)
 
-        # Maximale b-Richtung
-    if val[4] > maxB:
-        val[4] = maxB
-    if val[4] < -maxB:
-        val[4] = -maxB
+    # Maximale b-Richtung
+    val[4] = max(min(val[4], maxB), -maxB)
 
-        # Maximale c-Richtung
-    if val[5] > maxC:
-        val[5] = maxC
-    if val[5] < -maxC:
-        val[5] = -maxC
-
+    # Maximale c-Richtung
+    val[5] = max(min(val[5], maxC), -maxC)
+    
     return val
 
 
