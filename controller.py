@@ -2,6 +2,8 @@ import pygame
 import time
 import os
 from math import radians, degrees
+from ps5_mapping import *
+
 
 def initCont():
     """Inits controller to use it and returns joystick class.
@@ -18,6 +20,7 @@ def initCont():
 
     return joystick
 
+
 def stillConnected():
     """Checks if a Controller is still connected trough a linux command.
     `returns` boolean"""
@@ -29,6 +32,7 @@ def stillConnected():
         return False
     else:
         return True
+
 
 def get_movement_from_cont(controls, currentPose):
     """Calculates new pose from controller-input ans returns it as a list
@@ -44,18 +48,18 @@ def get_movement_from_cont(controls, currentPose):
 
     # speedfactors
     rotFac = 0.25  # Rotationspeed
-    transFac = 1   # Translationspeed
+    transFac = 1  # Translationspeed
 
     # add controller inputs to values
     pose[0] += controls['LS_UD'] * transFac
     pose[1] += controls['LS_LR'] * transFac
     pose[2] += controls['RS_UD'] * transFac * -1
-    pose[3] += controls['LEFT']  * rotFac
+    pose[3] += controls['LEFT'] * rotFac
     pose[3] -= controls['RIGHT'] * rotFac
-    pose[4] += controls['DOWN']  * rotFac
-    pose[4] -= controls['UP']    * rotFac
-    pose[5] += controls['L1']    * rotFac
-    pose[5] -= controls['R1']    * rotFac
+    pose[4] += controls['DOWN'] * rotFac
+    pose[4] -= controls['UP'] * rotFac
+    pose[5] += controls['L1'] * rotFac
+    pose[5] -= controls['R1'] * rotFac
 
     # move pose within workingspace if its outside
     pose = checkMaxVal(pose, 40, 40, [-150, -60], 40, 40, 30)  # this uses degrees
@@ -64,43 +68,50 @@ def get_movement_from_cont(controls, currentPose):
 
     return pose
 
+
 def get_controller_inputs(joystick):
     """Gets all inputs from controller and returns them as a dict"""
- 
+
     pygame.event.get()  # get event
     pygame.event.clear()  # clear events in queue (only one event needed)
 
-    input = {
+    input_values = {
         # buttons:
-        'xBut': joystick.get_button(0),
-        'oBut': joystick.get_button(1),
-        'triangBut': joystick.get_button(2),
-        'squareBut': joystick.get_button(3),
+        'xBut': joystick.get_button(CROSS_BUTTON),
+        'oBut': joystick.get_button(CIRCLE_BUTTON),
+        'triangBut': joystick.get_button(TRIANGLE_BUTTON),
+        'squareBut': joystick.get_button(SQUARE_BUTTON),
         # start/select/PS:
-        'SELECT': joystick.get_button(8),
-        'START': joystick.get_button(9),        
-        'PS': joystick.get_button(10),
+        'SELECT': joystick.get_button(SELECT_BUTTON),
+        'START': joystick.get_button(START_BUTTON),
+        'PS': joystick.get_button(PS_BUTTON),
         # control pad:
-        'UP': joystick.get_button(13),
-        'DOWN': joystick.get_button(14),
-        'LEFT': joystick.get_button(15),
-        'RIGHT': joystick.get_button(16),
+        'UP': joystick.get_button(UP_BUTTON),
+        'DOWN': joystick.get_button(DOWN_BUTTON),
+        'LEFT': joystick.get_button(LEFT_BUTTON),
+        'RIGHT': joystick.get_button(RIGHT_BUTTON),
         # trigger:
-        'L1': joystick.get_button(4),
-        'R1': joystick.get_button(5),
-        'L2': joystick.get_button(6),
-        'R2': joystick.get_button(7),
-        'L2_': joystick.get_axis(2),  # as axis (no boolean)
-        'R2_': joystick.get_axis(5),
+        'L1': joystick.get_button(L1_BUTTON),
+        'R1': joystick.get_button(R1_BUTTON),
+        'L2_': joystick.get_axis(L2_AXIS),  # as axis (no boolean)
+        'R2_': joystick.get_axis(R2_AXIS),
         # joysticks:
-        'LS_LR': joystick.get_axis(0),  # LS = left stick
-        'LS_UD': joystick.get_axis(1),
-        'LS': joystick.get_button(11), 
-        'RS_LR': joystick.get_axis(3),  # RS = right stick
-        'RS_UD': joystick.get_axis(4),
-        'RS': joystick.get_button(12),
+        'LS_LR': joystick.get_axis(LS_LR_AXIS),  # LS = left stick
+        'LS_UD': joystick.get_axis(LS_UD_AXIS),
+        'LS': joystick.get_button(LS_BUTTON),
+        'RS_LR': joystick.get_axis(RS_LR_AXIS),  # RS = right stick
+        'RS_UD': joystick.get_axis(RS_UD_AXIS),
+        'RS': joystick.get_button(RS_BUTTON),
     }
-    return input
+
+    input_values.update(
+        {
+            'L2': int(input_values['L2_'] != L2_PASSIVE_VAL),
+            'R2': int(input_values['R2_'] != L1_PASSIVE_VAL)
+        }
+    )
+    return input_values
+
 
 def mode_from_inputs(inputs):
     """returns the selected mode from the controller inputs as a str. Returns `None` if no mode was choosen"""
@@ -130,12 +141,12 @@ def mode_from_inputs(inputs):
     elif startBut == 1 and selectBut == 0:  # change to manual control with controller
         return 'manual'
     elif xBut == 0 and triangBut == 1 and squareBut == 0 and oBut == 0 and R2andL2:  # calibrate motors
-        return 'calibrate' 
+        return 'calibrate'
 
     return None
 
 
-def checkMaxVal(val,maxX,maxY,zBounds,maxA,maxB,maxC):
+def checkMaxVal(val, maxX, maxY, zBounds, maxA, maxB, maxC):
     # Maximale x-Richtung
     val[0] = max(min(val[0], maxX), -maxX)
 
@@ -153,7 +164,7 @@ def checkMaxVal(val,maxX,maxY,zBounds,maxA,maxB,maxC):
 
     # Maximale c-Richtung
     val[5] = max(min(val[5], maxC), -maxC)
-    
+
     return val
 
 
@@ -163,10 +174,11 @@ if __name__ == '__main__':
 
     pose = [0, 0, 0, 0, 0, 0]  # define pose
 
+    print(joy.get_name())
+    print(joy.get_numbuttons())
+
     while True:
         time.sleep(0.1)
         ans = get_controller_inputs(joy)
 
         print(ans)
-    
-    print('End')
