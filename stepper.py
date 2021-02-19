@@ -1,7 +1,9 @@
 from time import sleep
+
 import RPi.GPIO as GPIO
 
-def doSteps(stepPin:int, dirPin:int, direction=1, nrOfSteps:int=1, delay:float=0.02):
+
+def do_steps(step_pin: int, dir_pin: int, direction=1, step_count: int = 1, delay: float = 0.02):
     """
     Makes desired steps in one motor (Pins have to be initialized already)
     `stepPin`: int  Step GPIO Pin
@@ -13,21 +15,20 @@ def doSteps(stepPin:int, dirPin:int, direction=1, nrOfSteps:int=1, delay:float=0
     `delay`: float  delay between steps in [s]
     """
     # normalize direction to 0 or 1
-    if direction > 0:
-        direction = 1
-    else:
-        direction = 0
+    direction = int(direction > 0)
 
-    GPIO.output(dirPin, direction)  # set direction
+    # set direction
+    GPIO.output(dir_pin, direction)
 
-    for i in range (nrOfSteps):
-        GPIO.output(stepPin, GPIO.HIGH)
+    # Do steps
+    for i in range(step_count):
+        GPIO.output(step_pin, GPIO.HIGH)
         sleep(delay)
-        GPIO.output(stepPin, GPIO.LOW)
+        GPIO.output(step_pin, GPIO.LOW)
         sleep(delay)
 
 
-def doMultiStep(pins2step:list, stepPins:list, dirPins:list, directions:list=[1,1,1,1,1,1], delay:float=0.02):
+def do_multi_step(pins2step: list, step_pins: list, dir_pins: list, directions=None, delay: float = 0.02):
     """
     Makes one (or zero) step(s) for each motor simultaniously. All list have to be the same length
     (Pins have to be initialized already)
@@ -38,24 +39,24 @@ def doMultiStep(pins2step:list, stepPins:list, dirPins:list, directions:list=[1,
     `directions`: list of boolean (0 o 1)    corresponding direction
     `delay`: float  delay between steps in [s]
     """
+    if directions is None:
+        directions = [1, 1, 1, 1, 1, 1]
+
     # normalize direction to 0 or 1
-    for dir in directions:
-        if dir > 0: dir = 1        
-        else: dir = 0
+    directions = [int(direction > 0) for direction in directions]
 
     # set all direction pins
-    for i, dir in enumerate(directions):
-        GPIO.output(dirPins[i], dir)
+    for i, direction in enumerate(directions):
+        GPIO.output(dir_pins[i], direction)
 
     # set step-pins high
     for i, takeStep in enumerate(pins2step):
-        if takeStep > 0: GPIO.output(stepPins[i], GPIO.HIGH)
-
+        if takeStep > 0:
+            GPIO.output(step_pins[i], GPIO.HIGH)
     sleep(delay)
-    
+
     # set step-pins low again
     for i, takeStep in enumerate(pins2step):
-        if takeStep > 0: GPIO.output(stepPins[i], GPIO.LOW)
-
+        if takeStep > 0:
+            GPIO.output(step_pins[i], GPIO.LOW)
     sleep(delay)
-    

@@ -6,17 +6,16 @@ import RPi.GPIO as GPIO
 import stepper
 
 from scipy.optimize import fsolve
+from slerp import slerp_pose, angle_to_turn
+
 
 class sixRUS:
     """Class for the 6-RUS-robot"""
 
-    ### Varriables:
-
-    def initAndSetVars(self):
+    def init_vars(self):
         """Calling this funciton in __init__ to make all variables dynamic"""
 
         self.currPose = [0.0]*6  # current pose of the robot: [x, y, z, alpha, beta, gamma]
-
         self.currSteps = [0]*6  # current motorangles as steps #TODO: this varriable is not updated yet
 
         # TODO: step variable to calculate the exact position
@@ -32,7 +31,7 @@ class sixRUS:
         # self.geometricParams = [57.0, 92.0, 11.0, 9.5, 63.0, 12.0]  # small endeffector
         self.geometricParams = [57.0, 92.0, 29.5, 12.5, 63.0, 12.0]  # big endeffector
         
-        ### Robot GPIO-pins:
+        # Robot GPIO-pins:
         # Stepsize pins
         self.M0 = 21
         self.M1 = 20
@@ -44,27 +43,20 @@ class sixRUS:
         # Step pins ([0] is Motor 1, [1] is Motor 2 and so forth)
         self.stepPins = [6, 11, 10, 27, 4, 2]
 
-
-    ### Methods:
-
-    def __init__(self, stepperMode = 1/32, stepsPerRev = 200, stepDelay = 0.0208):
+    def __init__(self, stepper_mode=1 / 32, steps_per_rev=200, step_delay=0.0208):
         """Initialise the Robot
         `stepperMode`: float  Microstepmode e.g. 1/32, 1/16, 1/8; 1/4, 1/2 or 1
         `stepsPerRev`: int  How many Full-steps the motors have
         `stepDelay`: in [s]   SleepDelay between steps lower time allows for faster rotation but is
         more susceptible of missing steps
         """
+        self.init_vars()  # set all Varriables
+        self.stepAngle = stepper_mode * 2 * m.pi / steps_per_rev  # angle corresponding to one step
+        self.stepperMode = stepper_mode  # set mode to class variable
+        self.stepDelay = stepper_mode * step_delay  # calculate time between steps
+        self.init_gpio()  # initialise needed GPIO-pins
 
-        self.initAndSetVars()  # set all Varriables
-
-        self.stepAngle = stepperMode * 2 * m.pi / stepsPerRev  # angle corresponding to one step
-        self.stepperMode = stepperMode  # set mode to class variable
-
-        self.stepDelay = stepperMode * stepDelay  # calculate time between steps
-        
-        self.init_GPIOs()  # initialise needed GPIO-pins
-
-    def init_GPIOs(self):
+    def init_gpio(self):
         """This initialises all GPIO pins of the Raspberry Pi that are needed.  
         The pins are hardcoded and defined in the documentation! If they have to be 
         changed, edit the corresponting variables in this class"""
@@ -72,11 +64,11 @@ class sixRUS:
         GPIO.setmode(GPIO.BCM)  # use GPIO numbers (NOT pin numbers)
 
         # set up microstep pins
-        MODE = (self.M0, self.M1, self.M2)   # microstep resolution GPIO pins
-        GPIO.setup(MODE, GPIO.OUT)  # set M-pins (M0,M1,M2) as outputpins
+        mode = (self.M0, self.M1, self.M2)   # microstep resolution GPIO pins
+        GPIO.setup(mode, GPIO.OUT)  # set M-pins (M0,M1,M2) as outputpins
 
         # dictionary for microstep mode
-        RESOLUTION = {
+        resolution = {
                     1: (0, 0, 0),
                     1/2: (1, 0, 0),
                     1/4: (0, 1, 0),
@@ -85,7 +77,7 @@ class sixRUS:
                     1/32: (1, 0, 1)
                     }
 
-        GPIO.output(MODE, RESOLUTION[self.stepperMode])  # set Mode-Pins to desired values
+        GPIO.output(mode, resolution[self.stepperMode])  # set Mode-Pins to desired values
 
         # init Step-Pins as output-pins
         for i in self.stepPins:
@@ -101,78 +93,77 @@ class sixRUS:
         GPIO.setup(0, GPIO.OUT)
         GPIO.output(0, GPIO.LOW)
 
-    def angles2steps(self, angles:list):
+    def angles2steps(self, angles: list):
         """converts list of angles [rad] to list of steps"""
-
         steps = [round(x / self.stepAngle) for x in angles]
-
         return steps
 
     # MOVING
-    def mov_steps(self, stepList, newPose:list):
+    def mov_steps(self, step_list, new_pose: list):
         """ This funktion moves every motor x steps, where x are the number of steps to take 
         `stepList` is a np-array or list with 6 Values for the steps to take
         `newPose`:list is the pose after the movement was done
         """
-
         # movVec = np.array([2, -5, 1, -10, 0, 0])
-        movVec = np.array(stepList)  # convert to np.array for vector calculations
+        mov_vec = np.array(step_list)  # convert to np.array for vector calculations
 
         # compensate for motor placement (switch direction every second motor)
-        rotationCompensation = np.array([1, -1, 1, -1, 1, -1])
-        movVec = np.multiply(movVec, rotationCompensation)
+        rotation_compensation = np.array([1, -1, 1, -1, 1, -1])
+        mov_vec = np.multiply(mov_vec, rotation_compensation)
 
-        stepCount = np.zeros(6, dtype=int)  # step counter for calculating on wich loop to move
+        step_count = np.zeros(6, dtype=int)  # step counter for calculating on wich loop to move
 
-        maxSteps = int(max(abs(movVec)))  # maximum steps to move
-        stepAfterInc = maxSteps / (abs(movVec) + 1)  # after which increments to take one step
+        max_steps = int(max(abs(mov_vec)))  # maximum steps to move
+        step_after_inc = max_steps / (abs(mov_vec) + 1)  # after which increments to take one step
 
-        stepMotors = [0]*6  # saves which motor to tun on each step (1 -> turn; 0 -> do not turn)
+        step_motors = [0]*6  # saves which motor to tun on each step (1 -> turn; 0 -> do not turn)
 
         # determine direction from sign of vector-element
         directions = [0]*6  # saves in which directions the motors should turn
         for i, _ in enumerate(directions):
-            if movVec[i] < 0: directions[i] = 0
-            else: directions[i] = 1
+            if mov_vec[i] < 0:
+                directions[i] = 0
+            else:
+                directions[i] = 1
     
-        for i in range(maxSteps):  # loop with step for highest amount of steps
+        for i in range(max_steps):  # loop with step for highest amount of steps
             
-            stepMotors = [0]*6  # reset 
+            step_motors = [0]*6  # reset
 
-            for n, incNr in enumerate(stepAfterInc):  # loop trough all motor step-values
+            for n, incNr in enumerate(step_after_inc):  # loop trough all motor step-values
                 # n in here is the number of the targetmotor. Starting from 0
                 
                 if np.isinf(incNr):  # if number is infinite skip loop (happens if steps to move are 0)
                     continue
                 
-                c = round(((stepCount[n] + 1) * incNr))
+                c = round(((step_count[n] + 1) * incNr))
 
                 if c == i or incNr < 1:  # test if a step should be executed
                     
-                    stepCount[n] += 1  # Adding steps for calculating the next step                    
-                    stepMotors[n] = 1  # Add that this motor should 
+                    step_count[n] += 1  # Adding steps for calculating the next step
+                    step_motors[n] = 1  # Add that this motor should
 
             # Execute steps for motors, if they should step
-            stepper.doMultiStep(stepMotors, self.stepPins, self.dirPins, directions, delay=self.stepDelay)
+            stepper.do_multi_step(step_motors, self.stepPins, self.dirPins, directions, delay=self.stepDelay)
 
         # Update current pose and current steps
-        self.currSteps = list(np.array(self.currSteps) + np.array(stepList))
-        self.currPose = newPose
+        self.currSteps = list(np.array(self.currSteps) + np.array(step_list))
+        self.currPose = new_pose
 
-    def mov(self, pose:list):
+    def mov(self, pose: list):
         """Move to new position/pose with Point-to-Point (PTP) interpolation.
         This is a synchronous PTP implementation"""
         
-        newAngles = self.inv_kinematic(pose)  # get new angles
-        newSteps = self.angles2steps(newAngles)  # calculate steps of new position
+        new_angles = self.inv_kinematic(pose)  # get new angles
+        new_steps = self.angles2steps(new_angles)  # calculate steps of new position
 
         # create list of steps to move
-        stepsToMove = np.array(newSteps) - np.array(self.currSteps)
+        steps_to_move = np.array(new_steps) - np.array(self.currSteps)
 
         # move motors corresponding to stepsToMove-list
-        self.mov_steps(stepsToMove, pose)
+        self.mov_steps(steps_to_move, pose)
 
-    def mov_lin(self, pose:list, posRes:float = 10, angRes:float = 3, vel:float = None):
+    def mov_lin(self, pose: list, pos_res: float = 10, ang_res: float = 3, vel: float = None):
         """
         Move to new position with linear interpolation  
         `pose`: list with values of the pose to move to  
@@ -180,40 +171,36 @@ class sixRUS:
         `angRes`: how many interpolating points should be used in [steps in (10*deg)]
         `vel`: how fast the robot should move [cm/s] (default is as fast as possible)
         """
-    
-        from slerp import slerp_pose
-        from slerp import angle_to_turn
+        # Calculate distance to move
+        x_dir = pose[0] - self.currPose[0]
+        y_dir = pose[1] - self.currPose[1]
+        z_dir = pose[2] - self.currPose[2]
 
-        ### Calculate distance to move
-        xDir = pose[0] - self.currPose[0]
-        yDir = pose[1] - self.currPose[1]
-        zDir = pose[2] - self.currPose[2]
+        distance = m.sqrt(x_dir**2 + y_dir**2 + z_dir**2)  # distance to move [mm]
 
-        distance = m.sqrt(xDir**2 + yDir**2 + zDir**2)  # distance to move [mm]
+        steps_pos = distance * pos_res / 10  # Number of steps to move (calculated by distance)
 
-        stepsPos = distance * posRes / 10  # Number of steps to move (calculated by distance)
+        # Calculate angle to move
+        angle_to_turn_val = angle_to_turn(self.currPose, pose)
 
-        ### Calculate angle to move
-        angleToTurn = angle_to_turn(self.currPose, pose)
+        steps_rot = m.degrees(angle_to_turn_val) * ang_res / 10  # Number of steps to move (calculated by angle)
 
-        stepsRot = m.degrees(angleToTurn) * angRes / 10  #  Number of steps to move (calculated by angle)
+        # take the maximum steps needed to match resolution
+        nr_of_steps = m.ceil(max([steps_pos, steps_rot]))
 
-        ### take the maximum steps needed to match resolution
-        nrOfSteps = m.ceil(max([stepsPos, stepsRot]))
-
-        if nrOfSteps <= 0: return  # return if poses are already identical
+        if nr_of_steps <= 0:
+            return  # return if poses are already identical
 
         # check if velocity was given
         if vel is not None:
             if vel > 0:
                 # Calculate the timing for velocity management  
                 t_ges = (distance/10) / vel  # calculate duration of whole movement
-                dt_ideal = t_ges / nrOfSteps  # calculate time it should take to execute one loop iteration
+                dt_ideal = t_ges / nr_of_steps  # calculate time it should take to execute one loop iteration
             else:
                 print('Given velocity is lower than 0 or 0! Using default!')
 
-
-        poses = slerp_pose(self.currPose, pose, nrOfSteps + 1)  # calculate poses in between
+        poses = slerp_pose(self.currPose, pose, nr_of_steps + 1)  # calculate poses in between
 
         # initialization of variables needed in the loop
         t_curr = 0
@@ -242,7 +229,7 @@ class sixRUS:
 
         return
 
-    def homing(self, method:str):
+    def homing(self, method: str):
         """Homing of the Robot
         `method`:str  chooses the method of homing
 
@@ -253,19 +240,18 @@ class sixRUS:
 
         if method == '90':
             # Homing with Homeposition: Angles -> (90°,90°,90°,90°,90°,90°)
-
             angles = [m.pi/2]*6
 
-            homingPose = self.for_kinematic(angles)  # calculate the position via forward kinematics
+            homing_pose = self.for_kinematic(angles)  # calculate the position via forward kinematics
 
-            self.currPose = homingPose
+            self.currPose = homing_pose
             self.currSteps = self.angles2steps(angles)
 
         else:
             raise Exception('Chosen homing-method is not defined!')
 
     # KINEMATICS
-    def inv_kinematic(self, pose:list): 
+    def inv_kinematic(self, pose: list):
         """Inverse kinematics of 6-RUS robot:
         
         `pose`: list with numeric content 
@@ -281,14 +267,14 @@ class sixRUS:
         gamma = float(pose[5])
 
         # Use given Robot dimensions
-        geometicParams = self.geometricParams
+        geometic_params = self.geometricParams
 
-        l1 = geometicParams[0]
-        l2 = geometicParams[1]
-        dx = geometicParams[2]
-        dy = geometicParams[3]
-        Dx = geometicParams[4]
-        Dy = geometicParams[5]
+        l1 = geometic_params[0]
+        l2 = geometic_params[1]
+        dx = geometic_params[2]
+        dy = geometic_params[3]
+        Dx = geometic_params[4]
+        Dy = geometic_params[5]
 
         j = complex(0, 1)  # define complex numer (0 + i)
 
@@ -324,17 +310,17 @@ class sixRUS:
 
         `return`: list with pose in the form of [x, y, z, α, β, γ]"""
         
-        anglesAsNpArray = np.array(angles)  # convert to numpy array to subtract from another array
+        angles_as_np_array = np.array(angles)  # convert to numpy array to subtract from another array
         
         # create function to minimize
-        def func(X, H1 = anglesAsNpArray):
+        def func(x, h1=angles_as_np_array):
             """This function returns the difference between the current position (`H1`) and a guess (`X`).
             It is used for the numeric fsolve."""
 
-            motorAngles = self.inv_kinematic(X)
-            H2 = np.array(motorAngles)
+            motor_angles = self.inv_kinematic(x)
+            h2 = np.array(motor_angles)
 
-            difference = H1 - H2  # calculate the difference between calulated and real angles
+            difference = h1 - h2  # calculate the difference between calulated and real angles
 
             return difference
         
@@ -352,13 +338,9 @@ class sixRUS:
         self.geometricParams = [l1, l2, dx, dy, Dx, Dy]
 
 
-
-if __name__ == '__main__':  # Example Code if this file gets executed directly
-
-    # from sixRUS import sixRUS  # import Robot class 
-    import time  # import time for delays
-
-    robo = sixRUS(stepperMode=1/32,stepDelay=0.001)  # initialise robot 
+if __name__ == '__main__':
+    # Example Code if this file gets executed directly
+    robo = sixRUS(stepper_mode=1 / 32, step_delay=0.001)  # initialise robot
     robo.homing('90')  # homing of robot with method ‘90’
 
     print('Homingpose: ', robo.currPose)

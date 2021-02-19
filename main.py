@@ -1,12 +1,13 @@
-from sixRUS import sixRUS
-import time
-import controller as con
-import RPi.GPIO as GPIO
-import demo 
-import types
 import random
-
+import time
+import types
 from threading import Timer, Event
+
+import RPi.GPIO as GPIO
+
+import controller as con
+import demo
+from sixRUS import sixRUS
 
 # GLOBALS
 programStopped = Event()  # Event to set if program gets
@@ -15,22 +16,21 @@ robotMode = ''
 joystick = None  # global varriable for joystick-class
 alreadyConnected = False  # check if contoller reconnected
 
+
 def call_every_5_sec():
     """execute everything in here every 5 seconds after"""
     if programStopped.is_set():  # only execute routine if program is not terminated
         return
 
-    #### Check if the controller is connected ####
-    connected = con.stillConnected()  # check if controller is connected
-    
+    # Check if the controller is connected
+    connected = con.still_connected()
+
     global alreadyConnected
-    
-    if connected == False:  # not connected
+
+    if not connected:
         alreadyConnected = False
         print("Please connect controller! Retrying in 5 seconds...")
-        
-    else:  # connected
-
+    else:
         if alreadyConnected:  # controller is still connected
             print('Controller still connected.')
             # no new initialisation required here
@@ -42,6 +42,7 @@ def call_every_5_sec():
             print('Controller connected.')
 
     Timer(5.0, call_every_5_sec).start()  # call program again after 5 seconds
+
 
 def call_every_tenth_sec():
     """call every 0.1 seconds"""
@@ -56,11 +57,12 @@ def call_every_tenth_sec():
 
     Timer(0.1, call_every_tenth_sec).start()  # call program again after 0.1 seconds
 
+
 def init_global_joystick():
     """initalizes the controller as a global joystick varriable"""
 
     global joystick
-    joystick = con.initCont()
+    joystick = con.init_cont()
     return joystick
 
 
@@ -79,24 +81,25 @@ def eval_controller_response(response):
             pass
         elif response == 'manual':
             pass
-        elif response == 'calibrate' :
+        elif response == 'calibrate':
             pass
         else:
             raise Exception("Unknown answer from controller")
-        
+
         if robotMode != response:  # only print if the mode changes
             print('Switching to:', response)
             robotMode = response  # set robot mode to the response
             return True
 
     return False  # no response given
-  
+
 
 def startListening2Cont():
     """start listening to controller every 0.1 s"""
     global shouldNotListen2Cont
     shouldNotListen2Cont.clear()
     Timer(0.1, call_every_tenth_sec).start()
+
 
 def stopListening2Cont():
     """stop listening to controller. Needed if a program is listening to 
@@ -115,12 +118,13 @@ def mov_with_controller(robot, dt=0.001):
         time.sleep(dt)
 
         inputs = con.get_controller_inputs(joystick)
-        newPose = con.get_movement_from_cont(inputs, robot.currPose)  # calc new pose
+        new_pose = con.get_movement_from_cont(inputs, robot.currPose)  # calc new pose
 
         quit = eval_controller_response(con.mode_from_inputs(inputs))  # check if mode was changed
-        if quit is True: break
+        if quit:
+            break
 
-        robot.mov(newPose)
+        robot.mov(new_pose)
 
 
 def move_with_demo(robot):
@@ -128,11 +132,11 @@ def move_with_demo(robot):
 
     modules = list_of_modules(demo)
     prog = random.choice(modules)  # choose a random demo
-    demoPosList = prog()  # execute chosen demo programm
+    demo_pos_list = prog()  # execute chosen demo programm
 
     global robotMode
 
-    for pos in demoPosList:
+    for pos in demo_pos_list:
         try:
             if pos[6] == 'lin':
                 coord = pos[:6]  # extract only pose
@@ -142,22 +146,23 @@ def move_with_demo(robot):
                 robot.mov(coord)  # move with PTP-interplation
         except IndexError:
             robot.mov(pos)  # if 'lin' or 'mov' wasent given, use mov/PTP
-        
+
         if not robotMode == 'demo':  # break if the mode was changed
             break
-    
+
 
 def list_of_modules(packageName):
     """Find all modules in a package 
     `packageName`: Name of package
     `return`: List of all modules in this package
     """
-    modulList = []
+    modul_list = []
     for a in dir(demo):
         if isinstance(getattr(demo, a), types.FunctionType):
-            modulList.append(getattr(demo,a))
+            modul_list.append(getattr(demo, a))
 
-    return modulList
+    return modul_list
+
 
 def calibrate_process(robot, dt=0.005):
     """enters mode, where the user can calibrate each motor in microstep mode.
@@ -167,47 +172,52 @@ def calibrate_process(robot, dt=0.005):
     """
 
     global joystick
-    motNum = 0  # motornumber from 0 to 5
+    mot_num = 0  # motornumber from 0 to 5
     # pose after calibration has to be given to move the motors but is not necessary here 
     # since a homing procedure has to be done afterwards anyways
-    poseAfterCali = [0, 0, 0, 0, 0, 0]
-    allowedToChangeAgain = True  # if the next motor can be selected
+    pose_after_cali = [0, 0, 0, 0, 0, 0]
+    allowed_to_change_again = True  # if the next motor can be selected
 
     while True:
         time.sleep(dt)
         controls = con.get_controller_inputs(joystick)
 
-        caliMot = [0, 0, 0, 0, 0, 0]
+        cali_mot = [0, 0, 0, 0, 0, 0]
 
-        if allowedToChangeAgain:
+        if allowed_to_change_again:
             # change motornumber with L1 and R1
-            if   controls['L1']: motNum -= 1
-            elif controls['R1']: motNum += 1
+            if controls['L1']:
+                mot_num -= 1
+            elif controls['R1']:
+                mot_num += 1
 
             # check if selected motor number exists
-            if   motNum > 5: motNum = 0
-            elif motNum < 0: motNum = 5
-            allowedToChangeAgain = False
-        
+            if mot_num > 5:
+                mot_num = 0
+            elif mot_num < 0:
+                mot_num = 5
+            allowed_to_change_again = False
+
         if controls['L1'] == 0 and controls['R1'] == 0:  # both buttons have to be released to switch to next motor
-            allowedToChangeAgain = True
+            allowed_to_change_again = True
 
         if controls['UP']:
-            caliMot[motNum] = 1  # set 1 posivitve for selected motor
+            cali_mot[mot_num] = 1  # set 1 posivitve for selected motor
         elif controls['DOWN']:
-            caliMot[motNum] = -1  # set -1 posivitve for selected motor
+            cali_mot[mot_num] = -1  # set -1 posivitve for selected motor
 
-        robot.mov_steps(caliMot, poseAfterCali) 
+        robot.mov_steps(cali_mot, pose_after_cali)
 
         quit = eval_controller_response(con.mode_from_inputs(controls))  # check if mode was changed
-        if quit is True: break
+        if quit:
+            break
 
-############## main function ###################
+
 def main():
     global robotMode
     robotMode = 'demo'  # current mode (check documentation for all possible modes)
 
-    robo = sixRUS(stepperMode=1/32, stepDelay=0.002)  # init robot
+    robo = sixRUS(stepper_mode=1 / 32, step_delay=0.002)  # init robot
 
     robo.homing('90')  # home robot
 
@@ -216,13 +226,12 @@ def main():
     call_every_5_sec()  # call subroutine every 5-seconds to check for controller
 
     startListening2Cont()  # start listening to controller
-    
-    
+
     while True:  # infinite loop only breaks on Keyboard-Interrupt
         while robotMode == 'demo':
             move_with_demo(robo)
             time.sleep(2)  # wait and then execute the next function
-            
+
         while robotMode == 'homing':
             stopListening2Cont()  # stop listening to controller to prevent program change while homing
             time.sleep(1.5)  # wait a bit to reduce multiple homing attempts
@@ -236,11 +245,11 @@ def main():
             startListening2Cont()  # let the program listen to the controller periodically again
 
         while robotMode == 'stop':  # stop robot after next movement and do nothing
-            firstTime = True
+            first_time = True
             while robotMode == 'stop':
-                if firstTime is True:
+                if first_time:
                     print("Stopped robot!")
-                    firstTime = False
+                    first_time = False
                 time.sleep(0.0001)  # limit loop time
 
         while robotMode == 'calibrate':
@@ -254,7 +263,6 @@ def main():
 
 # main program if this file get executed
 if __name__ == '__main__':
-
     try:
         main()
     except KeyboardInterrupt:  # shutdown python program gently
@@ -263,4 +271,5 @@ if __name__ == '__main__':
         GPIO.cleanup()  # cleanup GPIOs (to avoid warning on next startup)
         programStopped.set()  # set event for stopping threading
         # Exiting message
-        print("\n6-RUS program was terminated due to user-input or an error (Please wait ca. 5s) \nPlease start the program again to control the robot again!")
+        print(
+            "\n6-RUS program was terminated due to user-input or an error (Please wait ca. 5s) \nPlease start the program again to control the robot again!")

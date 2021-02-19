@@ -1,13 +1,13 @@
 from math import sin, cos
-# from math import atan2
 import numpy as np
 
 from scipy.optimize import fsolve
 
-def inv_kinematic(pose:list, geometicParams = [57.0, 92.0, 11.0, 9.5, 70.0, 12.0]): 
+
+def inv_kinematic(pose: list, geometric_params=(57.0, 92.0, 11.0, 9.5, 70.0, 12.0,)):
     """Inverse kinematics of 6-RUS robot:
     
-    `pose`: list with numeric content 
+    `pose`: list with numeric content
 
     `geometricParams`: geometric parameter of 6RUS-Robot given as list [l1, l2, dx, dy, Dx, Dy] (see documentation for more info)
     
@@ -23,19 +23,18 @@ def inv_kinematic(pose:list, geometicParams = [57.0, 92.0, 11.0, 9.5, 70.0, 12.0
     gamma = float(pose[5])
 
     # Check if custom geometric parameters were given
-    if geometicParams is inv_kinematic.__defaults__[0]:
+    if geometric_params is inv_kinematic.__defaults__[0]:
         print("WARNING! Default geometric parameters are selected. They may not match your 6-RUS Robot!")
 
     # Use given Robot dimensions
-    l1 = geometicParams[0]
-    l2 = geometicParams[1]
-    dx = geometicParams[2]
-    dy = geometicParams[3]
-    Dx = geometicParams[4]
-    Dy = geometicParams[5]
+    l1 = geometric_params[0]
+    l2 = geometric_params[1]
+    dx = geometric_params[2]
+    dy = geometric_params[3]
+    Dx = geometric_params[4]
+    Dy = geometric_params[5]
 
     j = complex(0, 1)  # define complex numer (0 + i)
-
 
     # TODO: manually implement the functions for theta 1-6 for possible time-optimisations
     # TEST for theta_1:
@@ -59,7 +58,6 @@ def inv_kinematic(pose:list, geometicParams = [57.0, 92.0, 11.0, 9.5, 70.0, 12.0
     theta_5 = np.angle((2*((((2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - 2*z + 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))**2 - (((cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - z + (sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))**2 + (Dx/2 + x + (3**(1/2)*Dy)/2 - cos(beta)*cos(gamma)*(dx/2 + (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 - (3**(1/2)*dx)/2))**2 + l1**2 - l2**2 + ((3**(1/2)*Dx)/2 - y - Dy/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2) + (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2))**2)**2/l1**2 + (Dx/2 + x + (3**(1/2)*Dy)/2 + 3**(1/2)*((3**(1/2)*Dx)/2 - y - Dy/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2) + (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 + (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 - (3**(1/2)*dx)/2))**2)*(2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - 2*z + 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))**2)/4)**(1/2) - ((((cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - z + (sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))**2 + (Dx/2 + x + (3**(1/2)*Dy)/2 - cos(beta)*cos(gamma)*(dx/2 + (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 - (3**(1/2)*dx)/2))**2 + l1**2 - l2**2 + ((3**(1/2)*Dx)/2 - y - Dy/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2) + (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2))**2)*(Dx/2 + x + (3**(1/2)*Dy)/2 + 3**(1/2)*((3**(1/2)*Dx)/2 - y - Dy/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2) + (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 + (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 - (3**(1/2)*dx)/2)))/l1)/((2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - 2*z + 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))**2 + (Dx/2 + x + (3**(1/2)*Dy)/2 + 3**(1/2)*((3**(1/2)*Dx)/2 - y - Dy/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2) + (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 + (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 - (3**(1/2)*dx)/2))**2) + ((2*((((2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - 2*z + 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))**2 - (((cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - z + (sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))**2 + (Dx/2 + x + (3**(1/2)*Dy)/2 - cos(beta)*cos(gamma)*(dx/2 + (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 - (3**(1/2)*dx)/2))**2 + l1**2 - l2**2 + ((3**(1/2)*Dx)/2 - y - Dy/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2) + (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2))**2)**2/l1**2 + (Dx/2 + x + (3**(1/2)*Dy)/2 + 3**(1/2)*((3**(1/2)*Dx)/2 - y - Dy/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2) + (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 + (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 - (3**(1/2)*dx)/2))**2)*(2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - 2*z + 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))**2)/4)**(1/2)*(Dx/2 + x + (3**(1/2)*Dy)/2 + 3**(1/2)*((3**(1/2)*Dx)/2 - y - Dy/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2) + (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 + (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 - (3**(1/2)*dx)/2)) + ((2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - 2*z + 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))**2*(((cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - z + (sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))**2 + (Dx/2 + x + (3**(1/2)*Dy)/2 - cos(beta)*cos(gamma)*(dx/2 + (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 - (3**(1/2)*dx)/2))**2 + l1**2 - l2**2 + ((3**(1/2)*Dx)/2 - y - Dy/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2) + (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2))**2))/l1)*j)/(((2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - 2*z + 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))**2 + (Dx/2 + x + (3**(1/2)*Dy)/2 + 3**(1/2)*((3**(1/2)*Dx)/2 - y - Dy/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2) + (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 + (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 - (3**(1/2)*dx)/2))**2)*(2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 - (3**(1/2)*dx)/2) - 2*z + 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 + (3**(1/2)*dy)/2))))
     theta_6 = np.angle((2*((((2*z + 2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))**2 - (((3**(1/2)*Dy)/2 - x - Dx/2 + cos(beta)*cos(gamma)*(dx/2 - (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 + (3**(1/2)*dx)/2))**2 + l1**2 - l2**2 + (z + (cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - (sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))**2 + (Dy/2 - y + (3**(1/2)*Dx)/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2) - (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2))**2)**2/l1**2 + (Dx/2 + x - (3**(1/2)*Dy)/2 + 3**(1/2)*(Dy/2 - y + (3**(1/2)*Dx)/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2) - (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 - (3**(1/2)*dy)/2) - cos(beta)*sin(gamma)*(dy/2 + (3**(1/2)*dx)/2))**2)*(2*z + 2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))**2)/4)**(1/2) - ((((3**(1/2)*Dy)/2 - x - Dx/2 + cos(beta)*cos(gamma)*(dx/2 - (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 + (3**(1/2)*dx)/2))**2 + l1**2 - l2**2 + (z + (cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - (sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))**2 + (Dy/2 - y + (3**(1/2)*Dx)/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2) - (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2))**2)*(Dx/2 + x - (3**(1/2)*Dy)/2 + 3**(1/2)*(Dy/2 - y + (3**(1/2)*Dx)/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2) - (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 - (3**(1/2)*dy)/2) - cos(beta)*sin(gamma)*(dy/2 + (3**(1/2)*dx)/2)))/l1)/((2*z + 2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))**2 + (Dx/2 + x - (3**(1/2)*Dy)/2 + 3**(1/2)*(Dy/2 - y + (3**(1/2)*Dx)/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2) - (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 - (3**(1/2)*dy)/2) - cos(beta)*sin(gamma)*(dy/2 + (3**(1/2)*dx)/2))**2) - ((2*((((2*z + 2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))**2 - (((3**(1/2)*Dy)/2 - x - Dx/2 + cos(beta)*cos(gamma)*(dx/2 - (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 + (3**(1/2)*dx)/2))**2 + l1**2 - l2**2 + (z + (cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - (sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))**2 + (Dy/2 - y + (3**(1/2)*Dx)/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2) - (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2))**2)**2/l1**2 + (Dx/2 + x - (3**(1/2)*Dy)/2 + 3**(1/2)*(Dy/2 - y + (3**(1/2)*Dx)/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2) - (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 - (3**(1/2)*dy)/2) - cos(beta)*sin(gamma)*(dy/2 + (3**(1/2)*dx)/2))**2)*(2*z + 2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))**2)/4)**(1/2)*(Dx/2 + x - (3**(1/2)*Dy)/2 + 3**(1/2)*(Dy/2 - y + (3**(1/2)*Dx)/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2) - (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 - (3**(1/2)*dy)/2) - cos(beta)*sin(gamma)*(dy/2 + (3**(1/2)*dx)/2)) + ((2*z + 2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))**2*(((3**(1/2)*Dy)/2 - x - Dx/2 + cos(beta)*cos(gamma)*(dx/2 - (3**(1/2)*dy)/2) + cos(beta)*sin(gamma)*(dy/2 + (3**(1/2)*dx)/2))**2 + l1**2 - l2**2 + (z + (cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - (sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))**2 + (Dy/2 - y + (3**(1/2)*Dx)/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2) - (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2))**2))/l1)*j)/(((2*z + 2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))**2 + (Dx/2 + x - (3**(1/2)*Dy)/2 + 3**(1/2)*(Dy/2 - y + (3**(1/2)*Dx)/2 + (cos(alpha)*sin(gamma) + cos(gamma)*sin(alpha)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2) - (cos(alpha)*cos(gamma) - sin(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2)) - cos(beta)*cos(gamma)*(dx/2 - (3**(1/2)*dy)/2) - cos(beta)*sin(gamma)*(dy/2 + (3**(1/2)*dx)/2))**2)*(2*z + 2*(cos(gamma)*sin(alpha) + cos(alpha)*sin(beta)*sin(gamma))*(dy/2 + (3**(1/2)*dx)/2) - 2*(sin(alpha)*sin(gamma) - cos(alpha)*cos(gamma)*sin(beta))*(dx/2 - (3**(1/2)*dy)/2))))
 
-
     return [theta_1, theta_2, theta_3, theta_4, theta_5, theta_6]
 
 
@@ -70,34 +68,29 @@ def for_kinematic(angles):
 
     `return`: list with pose in the form of [x, y, z, α, β, γ]"""
     
-    anglesAsNpArray = np.array(angles)  # convert to numpy array to subtract from another array
+    angles_as_np_array = np.array(angles)  # convert to numpy array to subtract from another array
     
     # create function to minimize
-    def func(X, H1 = anglesAsNpArray):
+    def func(x, h1=angles_as_np_array):
         """This function returns the difference between the current position (`H1`) and a guess (`X`).
         It is used for the numeric fsolve."""
-
-        #motorAngles = inv_kinematic(X[0], X[1], X[2], X[3], X[4], X[5])
-        motorAngles = inv_kinematic(X)
-        H2 = np.array(motorAngles)
-
-        difference = H1 - H2  # calculate the difference between calulated and real angles
-
+        # motorAngles = inv_kinematic(X[0], X[1], X[2], X[3], X[4], X[5])
+        motor_angles = inv_kinematic(x)
+        h2 = np.array(motor_angles)
+        difference = h1 - h2  # calculate the difference between calulated and real angles
         return difference
     
     # initial guess/startingvalue
     x_0 = [0.0, 0.0, -100.0, 0.0, 0.0, 0.0]
-
     curr_pose = fsolve(func, x_0)  # solve numerically with initial guess
 
     return list(curr_pose)
 
 
-
 if __name__ == '__main__':
     from math import degrees, radians
 
-    ### inverse kinematica test
+    # inverse kinematica test
     # x = -15
     # y = -35
     # z = -(150-23)+40
@@ -107,19 +100,18 @@ if __name__ == '__main__':
 
     x = 0
     y = 0
-    z = -127.54608422867989 # -(150-23)
+    # -(150-23)
+    z = -127.54608422867989
     alpha = 0
     beta = 0
     gamma = 0  # radians(30)
 
-
     test = inv_kinematic([x, y, z, alpha, beta, gamma])
-
     test = [degrees(k) for k in test]
 
     print(test)
 
-    ### forward kinematics test
+    # forward kinematics test
     angles = [90, 90, 90, 90, 90, 90]
     angles = [radians(k) for k in angles]
 
