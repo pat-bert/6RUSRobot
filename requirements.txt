@@ -1,0 +1,4 @@
+numpy==1.20.1
+pygame==2.0.1
+pyquaternion==0.9.9
+scipy==1.6.1
