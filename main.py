@@ -62,7 +62,7 @@ def init_global_joystick():
     """initalizes the controller as a global joystick varriable"""
 
     global joystick
-    joystick = con.init_cont()
+    joystick = con.initCont()
     return joystick
 
 
