@@ -23,7 +23,7 @@ def call_every_5_sec():
         return
 
     # Check if the controller is connected
-    connected = con.still_connected()
+    connected = con.stillConnected()
 
     global alreadyConnected
 
