@@ -9,28 +9,26 @@ from scipy.optimize import fsolve
 from slerp import slerp_pose, angle_to_turn
 
 
-class sixRUS:
+class SixRUS:
     """Class for the 6-RUS-robot"""
 
-    def init_vars(self):
-        """Calling this funciton in __init__ to make all variables dynamic"""
-
-        self.currPose = [0.0]*6  # current pose of the robot: [x, y, z, alpha, beta, gamma]
-        self.currSteps = [0]*6  # current motorangles as steps #TODO: this varriable is not updated yet
+    def __init__(self, stepper_mode=1 / 32, steps_per_rev=200, step_delay=0.0208):
+        """Initialise the Robot
+        `stepperMode`: float  Microstepmode e.g. 1/32, 1/16, 1/8; 1/4, 1/2 or 1
+        `stepsPerRev`: int  How many Full-steps the motors have
+        `stepDelay`: in [s]   SleepDelay between steps lower time allows for faster rotation but is
+        more susceptible of missing steps
+        """
+        self.currPose = [0.0] * 6  # current pose of the robot: [x, y, z, alpha, beta, gamma]
+        self.currSteps = [0] * 6  # current motorangles as steps #TODO: this varriable is not updated yet
 
         # TODO: step variable to calculate the exact position
 
-        self.stepsPerRev = 0.0  # how many steps the motor takes for one revolution (Full Step) (set in __init__)
-        self.stepperMode = 0.0  # microstep Mode (set in __init__)
-
-        self.stepAngle = 0.0  # Angle per step [rad] (calculated in __init__ function)
-        self.stepDelay = 0.0  # Delay between steps (calculated in __init__ function)
-        
         # Robot-Dimensions [mm]  (Hardcoded but can be changed via a function)
-        # [l1, l2, dx, dy, Dx, Dy]  (more Infos in documentation) 
+        # [l1, l2, dx, dy, Dx, Dy]  (more Infos in documentation)
         # self.geometricParams = [57.0, 92.0, 11.0, 9.5, 63.0, 12.0]  # small endeffector
         self.geometricParams = [57.0, 92.0, 29.5, 12.5, 63.0, 12.0]  # big endeffector
-        
+
         # Robot GPIO-pins:
         # Stepsize pins
         self.M0 = 21
@@ -43,14 +41,6 @@ class sixRUS:
         # Step pins ([0] is Motor 1, [1] is Motor 2 and so forth)
         self.stepPins = [6, 11, 10, 27, 4, 2]
 
-    def __init__(self, stepper_mode=1 / 32, steps_per_rev=200, step_delay=0.0208):
-        """Initialise the Robot
-        `stepperMode`: float  Microstepmode e.g. 1/32, 1/16, 1/8; 1/4, 1/2 or 1
-        `stepsPerRev`: int  How many Full-steps the motors have
-        `stepDelay`: in [s]   SleepDelay between steps lower time allows for faster rotation but is
-        more susceptible of missing steps
-        """
-        self.init_vars()  # set all Varriables
         self.stepAngle = stepper_mode * 2 * m.pi / steps_per_rev  # angle corresponding to one step
         self.stepperMode = stepper_mode  # set mode to class variable
         self.stepDelay = stepper_mode * step_delay  # calculate time between steps
@@ -202,11 +192,6 @@ class sixRUS:
 
         poses = slerp_pose(self.currPose, pose, nr_of_steps + 1)  # calculate poses in between
 
-        # initialization of variables needed in the loop
-        t_curr = 0
-        t_ideal = 0
-        dt = 0
-
         t_st = time.time()  # check the time
 
         for i, poseBetw in enumerate(poses):
@@ -325,7 +310,7 @@ class sixRUS:
             return difference
         
         # initial guess/startingvalue
-        x_0 = [0.0, 0.0, -130.0, 0.0, 0.0, 0.0]
+        x_0 = np.array([0.0, 0.0, -130.0, 0.0, 0.0, 0.0])
 
         curr_pose = fsolve(func, x_0)  # solve numerically with initial guess
 
@@ -340,7 +325,7 @@ class sixRUS:
 
 if __name__ == '__main__':
     # Example Code if this file gets executed directly
-    robo = sixRUS(stepper_mode=1 / 32, step_delay=0.001)  # initialise robot
+    robo = SixRUS(stepper_mode=1 / 32, step_delay=0.001)  # initialise robot
     robo.homing('90')  # homing of robot with method ‘90’
 
     print('Homingpose: ', robo.currPose)

@@ -5,11 +5,13 @@ from threading import Timer, Event
 
 import RPi.GPIO as GPIO
 
-import controller as con
+import controller
 import demo
-from sixRUS import sixRUS
+from SixRUS import SixRUS
 
 # GLOBALS
+from runtime import Runtime
+
 programStopped = Event()  # Event to set if program gets
 shouldNotListen2Cont = Event()  # Event for checking if the program should listen to the Controller
 robotMode = ''
@@ -18,20 +20,20 @@ alreadyConnected = False  # check if contoller reconnected
 
 
 def call_every_5_sec():
-    """execute everything in here every 5 seconds after"""
-    if programStopped.is_set():  # only execute routine if program is not terminated
-        return
+    """
 
-    # Check if the controller is connected
-    connected = con.still_connected()
+    """
+    # only execute routine if program is not terminated
+    if programStopped.is_set():
+        return
 
     global alreadyConnected
 
-    if not connected:
+    if not controller.still_connected():
         alreadyConnected = False
         print("Please connect controller! Retrying in 5 seconds...")
     else:
-        if alreadyConnected:  # controller is still connected
+        if alreadyConnected:
             print('Controller still connected.')
             # no new initialisation required here
         else:
@@ -41,28 +43,33 @@ def call_every_5_sec():
             alreadyConnected = True
             print('Controller connected.')
 
-    Timer(5.0, call_every_5_sec).start()  # call program again after 5 seconds
+    # call program again after 5 seconds
+    Timer(5.0, call_every_5_sec).start()
 
 
 def call_every_tenth_sec():
-    """call every 0.1 seconds"""
+    """
+
+    """
     if programStopped.is_set() or shouldNotListen2Cont.is_set():  # only execute routine if program is not terminated
         return
 
     global joystick
-    controls = con.get_controller_inputs(joystick)
+    controls = controller.get_controller_inputs(joystick)
 
     # evaluate the answer from controller
-    eval_controller_response(con.mode_from_inputs(controls))
+    eval_controller_response(controller.mode_from_inputs(controls))
 
-    Timer(0.1, call_every_tenth_sec).start()  # call program again after 0.1 seconds
+    # call program again after 0.1 seconds
+    Timer(0.1, call_every_tenth_sec).start()
 
 
 def init_global_joystick():
-    """initalizes the controller as a global joystick varriable"""
-
+    """
+    Initialize the controller in a global variable
+    """
     global joystick
-    joystick = con.init_cont()
+    joystick = controller.init_cont()
     return joystick
 
 
@@ -84,7 +91,7 @@ def eval_controller_response(response):
         elif response == 'calibrate':
             pass
         else:
-            raise Exception("Unknown answer from controller")
+            raise ValueError("Unknown answer from controller")
 
         if robotMode != response:  # only print if the mode changes
             print('Switching to:', response)
@@ -114,14 +121,14 @@ def mov_with_controller(robot, dt=0.001):
 
     global joystick
 
-    while True:  # infinite loop
+    while True:
         time.sleep(dt)
 
-        inputs = con.get_controller_inputs(joystick)
-        new_pose = con.get_movement_from_cont(inputs, robot.currPose)  # calc new pose
+        inputs = controller.get_controller_inputs(joystick)
+        new_pose = controller.get_movement_from_cont(inputs, robot.currPose)  # calc new pose
 
-        quit = eval_controller_response(con.mode_from_inputs(inputs))  # check if mode was changed
-        if quit:
+        # check if mode was changed
+        if eval_controller_response(controller.mode_from_inputs(inputs)):
             break
 
         robot.mov(new_pose)
@@ -180,7 +187,7 @@ def calibrate_process(robot, dt=0.005):
 
     while True:
         time.sleep(dt)
-        controls = con.get_controller_inputs(joystick)
+        controls = controller.get_controller_inputs(joystick)
 
         cali_mot = [0, 0, 0, 0, 0, 0]
 
@@ -208,7 +215,7 @@ def calibrate_process(robot, dt=0.005):
 
         robot.mov_steps(cali_mot, pose_after_cali)
 
-        quit = eval_controller_response(con.mode_from_inputs(controls))  # check if mode was changed
+        quit = eval_controller_response(controller.mode_from_inputs(controls))  # check if mode was changed
         if quit:
             break
 
@@ -217,14 +224,12 @@ def main():
     global robotMode
     robotMode = 'demo'  # current mode (check documentation for all possible modes)
 
-    robo = sixRUS(stepper_mode=1 / 32, step_delay=0.002)  # init robot
+    robo = SixRUS(stepper_mode=1 / 32, step_delay=0.002)  # init robot
 
     robo.homing('90')  # home robot
 
     init_global_joystick()
-
     call_every_5_sec()  # call subroutine every 5-seconds to check for controller
-
     startListening2Cont()  # start listening to controller
 
     while True:  # infinite loop only breaks on Keyboard-Interrupt
@@ -264,12 +269,14 @@ def main():
 # main program if this file get executed
 if __name__ == '__main__':
     try:
-        main()
+        # main()
+        runtime = Runtime()
+        runtime.loop()
     except KeyboardInterrupt:  # shutdown python program gently
         print('Stopped with KeyboardInterrupt!')
     finally:
         GPIO.cleanup()  # cleanup GPIOs (to avoid warning on next startup)
         programStopped.set()  # set event for stopping threading
         # Exiting message
-        print(
-            "\n6-RUS program was terminated due to user-input or an error (Please wait ca. 5s) \nPlease start the program again to control the robot again!")
+        print("6-RUS program was terminated due to user-input or an error (Please wait ca. 5s)")
+        print("Please start the program again to control the robot again!")
