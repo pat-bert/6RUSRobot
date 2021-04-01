@@ -29,7 +29,7 @@ def call_every_5_sec():
 
     global alreadyConnected
 
-    if not controller.still_connected():
+    if not controller.stillConnected():
         alreadyConnected = False
         print("Please connect controller! Retrying in 5 seconds...")
     else:
@@ -69,7 +69,7 @@ def init_global_joystick():
     Initialize the controller in a global variable
     """
     global joystick
-    joystick = controller.init_cont()
+    joystick = controller.initCont()
     return joystick
 
 
