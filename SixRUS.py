@@ -41,6 +41,8 @@ class SixRUS:
         # Step pins ([0] is Motor 1, [1] is Motor 2 and so forth)
         self.stepPins = [6, 11, 10, 27, 4, 2]
 
+        self.enablePin = 0
+
         self.stepAngle = stepper_mode * 2 * m.pi / steps_per_rev  # angle corresponding to one step
         self.stepperMode = stepper_mode  # set mode to class variable
         self.stepDelay = stepper_mode * step_delay  # calculate time between steps
@@ -80,8 +82,15 @@ class SixRUS:
             GPIO.output(i, GPIO.LOW)
 
         # set !ENABLE-Pin Low
-        GPIO.setup(0, GPIO.OUT)
-        GPIO.output(0, GPIO.LOW)
+        GPIO.setup(self.enablePin, GPIO.OUT)
+        # Start disabled to avoid noise
+        GPIO.output(self.enablePin, GPIO.HIGH)
+
+    def enable_steppers(self):
+        GPIO.output(self.enablePin, GPIO.LOW)
+
+    def disable_steppers(self):
+        GPIO.output(self.enablePin, GPIO.HIGH)
 
     def angles2steps(self, angles: list):
         """converts list of angles [rad] to list of steps"""

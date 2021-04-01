@@ -216,6 +216,9 @@ class Runtime:
                         first_time = False
                     time.sleep(0.0001)  # limit loop time
 
+            # After stop mode enable steppers
+            self.robot.enable_steppers()
+
             while self.current_mode == 'calibrate':
                 self.ignore_controller.set()  # stop listening to controller (bc. we listen all the time in here)
                 time.sleep(0.5)
