@@ -52,7 +52,7 @@ class Runtime:
         if self.program_stopped.is_set():
             return
 
-        if not controller.still_connected():
+        if not controller.stillConnected():
             self.already_connected = False
             print("Please connect controller! Retrying in 5 seconds...")
         else:
@@ -63,7 +63,7 @@ class Runtime:
                 # stop listening as the controller gets initalised
                 self.ignore_controller.set()
                 # init new joystick since the controller was reconnected or connected the first time
-                self.controller = controller.init_cont()
+                self.controller = controller.initCont()
                 self.ignore_controller.clear()
                 self.poll_program_mode()
                 self.already_connected = True
@@ -177,7 +177,7 @@ class Runtime:
 
     def loop(self):
         self.robot.homing('90')  # home robot
-        self.controller = controller.init_cont()
+        self.controller = controller.initCont()
         # call subroutine every 5-seconds to check for controller
         self.poll_controller_status()
         # start listening to controller
