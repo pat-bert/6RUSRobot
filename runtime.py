@@ -186,11 +186,13 @@ class Runtime:
 
         while True:  # infinite loop only breaks on Keyboard-Interrupt
             while self.current_mode == 'demo':
+                self.robot.enable_steppers()
                 self.move_demo()
                 time.sleep(2)  # wait and then execute the next function
 
             while self.current_mode == 'homing':
                 # stop listening to controller to prevent program change while homing
+                self.robot.enable_steppers()
                 self.ignore_controller.set()
                 time.sleep(1.5)  # wait a bit to reduce multiple homing attempts
                 self.robot.homing('90')  # use homing method '90'
@@ -202,6 +204,7 @@ class Runtime:
             while self.current_mode == 'manual':
                 # control the robot with the controller
                 # stop listening to controller (bc. we listen all the time in here)
+                self.robot.enable_steppers()
                 self.ignore_controller.set()
                 self.move_manual()
                 self.ignore_controller.clear()
@@ -209,6 +212,7 @@ class Runtime:
                 # let the program listen to the controller periodically again
 
             while self.current_mode == 'stop':  # stop robot after next movement and do nothing
+                self.robot.disable_steppers()
                 first_time = True
                 while self.current_mode == 'stop':
                     if first_time:
@@ -216,10 +220,8 @@ class Runtime:
                         first_time = False
                     time.sleep(0.0001)  # limit loop time
 
-            # After stop mode enable steppers
-            self.robot.enable_steppers()
-
             while self.current_mode == 'calibrate':
+                self.robot.enable_steppers()
                 self.ignore_controller.set()  # stop listening to controller (bc. we listen all the time in here)
                 time.sleep(0.5)
                 self.calibrate_process()
