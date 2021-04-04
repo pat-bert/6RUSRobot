@@ -79,10 +79,10 @@ class Runtime:
             # Finish thread if program is terminated
             return
 
-        if not self.ignore_controller.is_set():
-            # Handle controller inputs if active
-            controls = controller.get_controller_inputs(self.controller)
+        # Handle controller inputs all the time to keep button states up to date
+        controls = controller.get_controller_inputs(self.controller)
 
+        if not self.ignore_controller.is_set():
             # evaluate the answer from controller
             self.eval_controller_response(controller.mode_from_inputs(controls))
 
