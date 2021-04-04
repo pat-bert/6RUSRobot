@@ -25,7 +25,7 @@ class Runtime:
         evaluates the answer from the mode_from_input-function
         """
         if isinstance(response, str):
-            if response in ['stop', 'demo', 'manual', 'calibrate']:
+            if response in ['stop', 'demo', 'manual', 'calibrate', 'off']:
                 pass
             elif response == 'homing':
                 self.ignore_controller.set()
