@@ -1,7 +1,7 @@
 import random
 import time
 import types
-from threading import Event, Timer
+from threading import Event, Timer, RLock
 
 import controller
 import demo
@@ -13,13 +13,24 @@ class Runtime:
         # Thread-safe event flags
         self.program_stopped = Event()
         self.ignore_controller = Event()
-        self.current_mode = 'off'
+        self._current_mode = 'off'
         self.next_mode = 'stop'
         self.controller = None
         self.already_connected = False
         self.controller_poll_rate = 5
         self.mode_poll_rate = 0.1
         self.robot = SixRUS(stepper_mode=1 / 32, step_delay=0.002)
+        self.mode_lock = RLock()
+
+    @property
+    def current_mode(self):
+        with self.mode_lock:
+            return self._current_mode
+
+    @current_mode.setter
+    def current_mode(self, val):
+        with self.mode_lock:
+            self._current_mode = val
 
     def eval_controller_response(self, response):
         """
@@ -90,6 +101,7 @@ class Runtime:
 
         # check if mode was changed
         if not self.eval_controller_response(controller.mode_from_inputs(inputs)):
+            print('Exiting manual mode...')
             self.robot.mov(new_pose)
 
     def move_demo(self):
@@ -133,6 +145,7 @@ class Runtime:
         cali_step_increment = 1
 
         while True:
+            print('Calibrating...')
             time.sleep(dt)
             controls = controller.get_controller_inputs(self.controller)
             cali_mot = [0, 0, 0, 0, 0, 0]
