@@ -64,14 +64,16 @@ class Runtime:
         Timer(self.controller_poll_rate, self.poll_controller_status).start()
 
     def poll_program_mode(self):
-        # only execute routine if program is not terminated
-        if self.program_stopped.is_set() or self.ignore_controller.is_set():
+        if self.program_stopped.is_set():
+            # Finish thread if program is terminated
             return
 
-        controls = controller.get_controller_inputs(self.controller)
+        if not self.ignore_controller.is_set():
+            # Handle controller inputs if active
+            controls = controller.get_controller_inputs(self.controller)
 
-        # evaluate the answer from controller
-        self.eval_controller_response(controller.mode_from_inputs(controls))
+            # evaluate the answer from controller
+            self.eval_controller_response(controller.mode_from_inputs(controls))
 
         # call program again after 0.1 seconds
         Timer(self.mode_poll_rate, self.poll_program_mode).start()
@@ -196,7 +198,7 @@ class Runtime:
                 # listen again
                 self.ignore_controller.clear()
                 # exit homing
-                self.poll_program_mode()
+                # self.poll_program_mode()
                 self.current_mode = 'stop'
 
             while self.current_mode == 'manual':
@@ -206,8 +208,8 @@ class Runtime:
                 self.ignore_controller.set()
                 self.move_manual()
                 self.ignore_controller.clear()
-                self.poll_program_mode()
                 # let the program listen to the controller periodically again
+                # self.poll_program_mode()
 
             first_time = True
             while self.current_mode == 'stop':  # stop robot after next movement and do nothing
@@ -215,7 +217,7 @@ class Runtime:
                 if first_time:
                     print("Stopped robot!")
                     first_time = False
-                    self.poll_program_mode()
+                    # self.poll_program_mode()
                 time.sleep(0.0001)  # limit loop time
 
             while self.current_mode == 'calibrate':
@@ -224,9 +226,9 @@ class Runtime:
                 time.sleep(0.5)
                 self.calibrate_process()
                 time.sleep(0.5)
-                # let the program listen to the controller periodically again
                 self.ignore_controller.clear()
-                self.poll_program_mode()
+                # let the program listen to the controller periodically again
+                # self.poll_program_mode()
 
                 # home robot afterwards
                 print('Switching to homing')
