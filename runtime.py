@@ -101,8 +101,9 @@ class Runtime:
 
         # check if mode was changed
         if not self.eval_controller_response(controller.mode_from_inputs(inputs)):
-            print('Exiting manual mode...')
             self.robot.mov(new_pose)
+        else:
+            print('Exiting manual mode...')
 
     def move_demo(self):
         """
