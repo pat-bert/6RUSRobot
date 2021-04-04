@@ -217,6 +217,7 @@ class Runtime:
                     time.sleep(1.5)  # wait a bit to reduce multiple homing attempts
                     self.robot.homing('90')  # use homing method '90'
                     # exit homing and switch to state that stopped calibration
+                    print('Switching to ', self.next_mode)
                     self.current_mode = self.next_mode
                     # Reset next state marker
                     self.next_mode = 'stop'
