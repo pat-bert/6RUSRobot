@@ -44,7 +44,7 @@ class Runtime:
                 raise ValueError("Unknown answer from controller")
 
             if self.current_mode != response:  # only print if the mode changes
-                print('Switching to:', response)
+                print(f'Switching from {self.current_mode} to {response}.')
                 self.current_mode = response  # set robot mode to the response
                 return True
 
@@ -147,6 +147,11 @@ class Runtime:
         while True:
             time.sleep(dt)
             controls = controller.get_controller_inputs(self.controller)
+
+            # check if mode was changed
+            if self.eval_controller_response(controller.mode_from_inputs(controls)):
+                break
+
             cali_mot = [0, 0, 0, 0, 0, 0]
 
             if allowed_to_change_again:
@@ -178,10 +183,6 @@ class Runtime:
                 cali_step_increment = min(1 / self.robot.stepperMode, cali_step_increment + 1)
 
             self.robot.mov_steps(cali_mot, pose_after_cali)
-
-            # check if mode was changed but do not enter the state
-            if self.eval_controller_response(controller.mode_from_inputs(controls)):
-                break
 
     def loop(self):
         self.robot.homing('90')  # home robot
@@ -229,6 +230,7 @@ class Runtime:
                     self.robot.homing('90')  # use homing method '90'
                     # exit homing and switch to state that stopped calibration
                     print('Switching to stop')
+                    self.current_mode = 'stop'
                     self.ignore_controller.clear()
 
                 elif self.current_mode == 'stop':
