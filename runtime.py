@@ -191,6 +191,7 @@ class Runtime:
                 self.robot.enable_steppers()
 
                 if self.current_mode == 'demo':
+                    self.ignore_controller.clear()
                     self.move_demo()
                     time.sleep(2)  # wait and then execute the next function
 
@@ -221,8 +222,8 @@ class Runtime:
                     self.current_mode = self.next_mode
                     # Reset next state marker
                     self.next_mode = 'stop'
-                    self.ignore_controller.clear()
 
                 elif self.current_mode == 'stop':
+                    self.ignore_controller.clear()
                     # stop robot after next movement and do nothing
                     time.sleep(0.0001)  # limit loop time
