@@ -2,11 +2,14 @@ import os
 import time
 from math import degrees as deg
 from math import radians as rad
+from threading import RLock
 from typing import Dict
 
 import pygame
 
 from ps5_mapping import *
+
+mutex = RLock()
 
 
 def init_controller():
@@ -63,8 +66,9 @@ def get_movement_from_cont(controls, curr_pose):
 
 def get_controller_inputs(joystick):
     """Gets all inputs from controller and returns them as a dict"""
-    pygame.event.get()  # get event
-    pygame.event.clear()  # clear events in queue (only one event needed)
+    with mutex:
+        pygame.event.get()  # get event
+        pygame.event.clear()  # clear events in queue (only one event needed)
 
     hat_x, hat_y = joystick.get_hat(LRUD_HAT)
     up = int(hat_y > 0)
