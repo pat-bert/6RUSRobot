@@ -212,10 +212,10 @@ class Runtime:
             first_time = True
             while self.current_mode == 'stop':  # stop robot after next movement and do nothing
                 self.robot.disable_steppers()
-                self.poll_program_mode()
                 if first_time:
                     print("Stopped robot!")
                     first_time = False
+                    self.poll_program_mode()
                 time.sleep(0.0001)  # limit loop time
 
             while self.current_mode == 'calibrate':
