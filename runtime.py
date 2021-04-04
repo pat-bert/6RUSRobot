@@ -68,9 +68,7 @@ class Runtime:
             # Finish thread if program is terminated
             return
 
-        print('Program Mode Callback...')
         if not self.ignore_controller.is_set():
-            print('Checking controller inputs.')
             # Handle controller inputs if active
             controls = controller.get_controller_inputs(self.controller)
 
@@ -210,6 +208,7 @@ class Runtime:
                 self.ignore_controller.set()
                 self.move_manual()
                 self.ignore_controller.clear()
+                time.sleep(0.0001)  # limit loop time
                 # let the program listen to the controller periodically again
                 # self.poll_program_mode()
 
