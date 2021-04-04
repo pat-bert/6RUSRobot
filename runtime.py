@@ -89,7 +89,7 @@ class Runtime:
         # call program again after 0.1 seconds
         Timer(self.mode_poll_rate, self.poll_program_mode).start()
 
-    def move_manual(self, dt=0.001):
+    def move_manual(self, dt=0.005):
         """
         This is the manual controlling mode, where the robot can be driven with the controller.
         Exits only if the mode was changed or the program was interrupted
