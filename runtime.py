@@ -83,15 +83,12 @@ class Runtime:
         This is the manual controlling mode, where the robot can be driven with the controller.
         Exits only if the mode was changed or the program was interrupted
         """
-        while True:
-            time.sleep(dt)
-            inputs = controller.get_controller_inputs(self.controller)
-            new_pose = controller.get_movement_from_cont(inputs, self.robot.currPose)
+        time.sleep(dt)
+        inputs = controller.get_controller_inputs(self.controller)
+        new_pose = controller.get_movement_from_cont(inputs, self.robot.currPose)
 
-            # check if mode was changed
-            if self.eval_controller_response(controller.mode_from_inputs(inputs)):
-                break
-
+        # check if mode was changed
+        if not self.eval_controller_response(controller.mode_from_inputs(inputs)):
             self.robot.mov(new_pose)
 
     def move_demo(self):
@@ -184,53 +181,45 @@ class Runtime:
 
         # infinite loop only breaks on Keyboard-Interrupt
         while True:
-            while self.current_mode == 'demo':
+            if self.current_mode == 'stop':
+                self.robot.disable_steppers()
+            else:
                 self.robot.enable_steppers()
+
+            # State Machine
+            if self.current_mode == 'demo':
                 self.move_demo()
                 time.sleep(2)  # wait and then execute the next function
 
-            while self.current_mode == 'homing':
+            elif self.current_mode == 'homing':
                 # stop listening to controller to prevent program change while homing
-                self.robot.enable_steppers()
                 self.ignore_controller.set()
                 time.sleep(1.5)  # wait a bit to reduce multiple homing attempts
                 self.robot.homing('90')  # use homing method '90'
                 # listen again
                 self.ignore_controller.clear()
                 # exit homing
-                # self.poll_program_mode()
                 self.current_mode = 'stop'
 
-            while self.current_mode == 'manual':
+            elif self.current_mode == 'manual':
                 # control the robot with the controller
                 # stop listening to controller (bc. we listen all the time in here)
-                self.robot.enable_steppers()
                 self.ignore_controller.set()
                 self.move_manual()
                 self.ignore_controller.clear()
-                time.sleep(0.0001)  # limit loop time
-                # let the program listen to the controller periodically again
-                # self.poll_program_mode()
 
-            first_time = True
-            while self.current_mode == 'stop':  # stop robot after next movement and do nothing
-                self.robot.disable_steppers()
-                if first_time:
-                    print("Stopped robot!")
-                    first_time = False
-                    # self.poll_program_mode()
-                time.sleep(0.0001)  # limit loop time
-
-            while self.current_mode == 'calibrate':
-                self.robot.enable_steppers()
-                self.ignore_controller.set()  # stop listening to controller (bc. we listen all the time in here)
+            elif self.current_mode == 'calibrate':
+                # stop listening to controller (bc. we listen all the time in here)
+                self.ignore_controller.set()
                 time.sleep(0.5)
                 self.calibrate_process()
                 time.sleep(0.5)
                 self.ignore_controller.clear()
-                # let the program listen to the controller periodically again
-                # self.poll_program_mode()
 
                 # home robot afterwards
                 print('Switching to homing')
                 self.current_mode = 'homing'
+
+            elif self.current_mode == 'stop':
+                # stop robot after next movement and do nothing
+                time.sleep(0.0001)  # limit loop time
