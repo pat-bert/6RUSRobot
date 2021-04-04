@@ -24,20 +24,11 @@ class Runtime:
         """
         evaluates the answer from the mode_from_input-function
         """
-
         if isinstance(response, str):
-
-            if response == 'stop':
+            if response in ['stop', 'demo', 'manual', 'calibrate']:
                 pass
             elif response == 'homing':
                 self.ignore_controller.set()
-                pass
-            elif response == 'demo':
-                pass
-            elif response == 'manual':
-                pass
-            elif response == 'calibrate':
-                pass
             else:
                 raise ValueError("Unknown answer from controller")
 
@@ -52,7 +43,7 @@ class Runtime:
         if self.program_stopped.is_set():
             return
 
-        if not controller.stillConnected():
+        if not controller.still_connected():
             self.already_connected = False
             print("Please connect controller! Retrying in 5 seconds...")
         else:
@@ -63,7 +54,7 @@ class Runtime:
                 # stop listening as the controller gets initalised
                 self.ignore_controller.set()
                 # init new joystick since the controller was reconnected or connected the first time
-                self.controller = controller.initCont()
+                self.controller = controller.init_controller()
                 self.ignore_controller.clear()
                 self.poll_program_mode()
                 self.already_connected = True
@@ -134,7 +125,6 @@ class Runtime:
 
         `dt`: how fast the controller inputs get checked in [s]
         """
-
         mot_num = 0  # motornumber from 0 to 5
         # pose after calibration has to be given to move the motors but is not necessary here
         # since a homing procedure has to be done afterwards anyways
@@ -144,7 +134,6 @@ class Runtime:
         while True:
             time.sleep(dt)
             controls = controller.get_controller_inputs(self.controller)
-
             cali_mot = [0, 0, 0, 0, 0, 0]
 
             if allowed_to_change_again:
@@ -177,14 +166,15 @@ class Runtime:
 
     def loop(self):
         self.robot.homing('90')  # home robot
-        self.controller = controller.initCont()
+        self.controller = controller.init_controller()
         # call subroutine every 5-seconds to check for controller
         self.poll_controller_status()
         # start listening to controller
         self.ignore_controller.clear()
         self.poll_program_mode()
 
-        while True:  # infinite loop only breaks on Keyboard-Interrupt
+        # infinite loop only breaks on Keyboard-Interrupt
+        while True:
             while self.current_mode == 'demo':
                 self.robot.enable_steppers()
                 self.move_demo()
@@ -198,8 +188,8 @@ class Runtime:
                 self.robot.homing('90')  # use homing method '90'
                 # listen again
                 self.ignore_controller.clear()
-                self.poll_program_mode()
-                self.current_mode = 'stop'  # exit homing
+                # exit homing
+                self.current_mode = 'stop'
 
             while self.current_mode == 'manual':
                 # control the robot with the controller
@@ -231,4 +221,5 @@ class Runtime:
                 self.poll_program_mode()
 
                 # home robot afterwards
+                print('Switching to homing')
                 self.current_mode = 'homing'

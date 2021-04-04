@@ -52,7 +52,6 @@ class SixRUS:
         """This initialises all GPIO pins of the Raspberry Pi that are needed.  
         The pins are hardcoded and defined in the documentation! If they have to be 
         changed, edit the corresponting variables in this class"""
-
         GPIO.setmode(GPIO.BCM)  # use GPIO numbers (NOT pin numbers)
 
         # set up microstep pins
@@ -126,19 +125,16 @@ class SixRUS:
                 directions[i] = 1
     
         for i in range(max_steps):  # loop with step for highest amount of steps
-            
             step_motors = [0]*6  # reset
 
             for n, incNr in enumerate(step_after_inc):  # loop trough all motor step-values
                 # n in here is the number of the targetmotor. Starting from 0
-                
                 if np.isinf(incNr):  # if number is infinite skip loop (happens if steps to move are 0)
                     continue
                 
                 c = round(((step_count[n] + 1) * incNr))
 
                 if c == i or incNr < 1:  # test if a step should be executed
-                    
                     step_count[n] += 1  # Adding steps for calculating the next step
                     step_motors[n] = 1  # Add that this motor should
 
@@ -162,7 +158,7 @@ class SixRUS:
         # move motors corresponding to stepsToMove-list
         self.mov_steps(steps_to_move, pose)
 
-    def mov_lin(self, pose: list, pos_res: float = 10, ang_res: float = 3, vel: float = None):
+    def mov_lin(self, pose: list, pos_res: float = 10, ang_res: float = 3, vel: float = None) -> None:
         """
         Move to new position with linear interpolation  
         `pose`: list with values of the pose to move to  
@@ -176,12 +172,10 @@ class SixRUS:
         z_dir = pose[2] - self.currPose[2]
 
         distance = m.sqrt(x_dir**2 + y_dir**2 + z_dir**2)  # distance to move [mm]
-
         steps_pos = distance * pos_res / 10  # Number of steps to move (calculated by distance)
 
         # Calculate angle to move
         angle_to_turn_val = angle_to_turn(self.currPose, pose)
-
         steps_rot = m.degrees(angle_to_turn_val) * ang_res / 10  # Number of steps to move (calculated by angle)
 
         # take the maximum steps needed to match resolution
@@ -200,7 +194,6 @@ class SixRUS:
                 print('Given velocity is lower than 0 or 0! Using default!')
 
         poses = slerp_pose(self.currPose, pose, nr_of_steps + 1)  # calculate poses in between
-
         t_st = time.time()  # check the time
 
         for i, poseBetw in enumerate(poses):
@@ -221,9 +214,7 @@ class SixRUS:
                     # TODO: Maybe turn on LED or something (just printing on console in this case)
                     print('Can not keep velocity!')
 
-        return
-
-    def homing(self, method: str):
+    def homing(self, method: str) -> None:
         """Homing of the Robot
         `method`:str  chooses the method of homing
 
@@ -231,18 +222,14 @@ class SixRUS:
         ------ 
         '90': All arms connected to a motor point downwards  
         """
-
         if method == '90':
             # Homing with Homeposition: Angles -> (90°,90°,90°,90°,90°,90°)
             angles = [m.pi/2]*6
-
-            homing_pose = self.for_kinematic(angles)  # calculate the position via forward kinematics
-
+            homing_pose = self.forward_kinematic(angles)  # calculate the position via forward kinematics
             self.currPose = homing_pose
             self.currSteps = self.angles2steps(angles)
-
         else:
-            raise Exception('Chosen homing-method is not defined!')
+            raise ValueError('Chosen homing-method is not defined!')
 
     # KINEMATICS
     def inv_kinematic(self, pose: list):
@@ -297,7 +284,7 @@ class SixRUS:
 
         return [theta_1, theta_2, theta_3, theta_4, theta_5, theta_6]
 
-    def for_kinematic(self, angles):
+    def forward_kinematic(self, angles):
         """Forward kinematics of 6-RUS robot. This is done with a numeric solve (fsolve)
 
         `angles`: list of angles in the form of [θ1, θ2, θ3, θ4, θ5, θ6]
