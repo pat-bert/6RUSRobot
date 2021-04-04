@@ -68,7 +68,9 @@ class Runtime:
             # Finish thread if program is terminated
             return
 
+        print('Program Mode Callback...')
         if not self.ignore_controller.is_set():
+            print('Checking controller inputs.')
             # Handle controller inputs if active
             controls = controller.get_controller_inputs(self.controller)
 
