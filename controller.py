@@ -124,6 +124,8 @@ def mode_from_inputs(inputs: Dict[str, float]):
     # modes and returning of the mode as string
     if o and not x and not triangle and not square:
         return 'stop'
+    elif square and not x and not triangle and not o:
+        return 'off'
     elif select and not start:
         return 'demo'
     elif start and not select:

@@ -13,7 +13,7 @@ class Runtime:
         # Thread-safe event flags
         self.program_stopped = Event()
         self.ignore_controller = Event()
-        self.current_mode = 'stop'
+        self.current_mode = 'off'
         self.controller = None
         self.already_connected = False
         self.controller_poll_rate = 5
@@ -181,45 +181,43 @@ class Runtime:
 
         # infinite loop only breaks on Keyboard-Interrupt
         while True:
-            if self.current_mode == 'stop':
+            # State Machine
+            if self.current_mode == 'off':
                 self.robot.disable_steppers()
+                time.sleep(0.0001)  # limit loop time
             else:
                 self.robot.enable_steppers()
 
-            # State Machine
-            if self.current_mode == 'demo':
-                self.move_demo()
-                time.sleep(2)  # wait and then execute the next function
+                if self.current_mode == 'demo':
+                    self.move_demo()
+                    time.sleep(2)  # wait and then execute the next function
 
-            elif self.current_mode == 'homing':
-                # stop listening to controller to prevent program change while homing
-                self.ignore_controller.set()
-                time.sleep(1.5)  # wait a bit to reduce multiple homing attempts
-                self.robot.homing('90')  # use homing method '90'
-                # listen again
-                self.ignore_controller.clear()
-                # exit homing
-                self.current_mode = 'stop'
+                elif self.current_mode == 'manual':
+                    # control the robot with the controller
+                    # stop listening to controller (bc. we listen all the time in here)
+                    self.ignore_controller.set()
+                    self.move_manual()
+                    self.ignore_controller.clear()
 
-            elif self.current_mode == 'manual':
-                # control the robot with the controller
-                # stop listening to controller (bc. we listen all the time in here)
-                self.ignore_controller.set()
-                self.move_manual()
-                self.ignore_controller.clear()
+                elif self.current_mode == 'calibrate':
+                    # stop listening to controller (bc. we listen all the time in here)
+                    self.ignore_controller.set()
+                    time.sleep(0.5)
+                    self.calibrate_process()
+                    time.sleep(0.5)
+                    # home robot afterwards
+                    print('Switching to homing')
+                    self.current_mode = 'homing'
 
-            elif self.current_mode == 'calibrate':
-                # stop listening to controller (bc. we listen all the time in here)
-                self.ignore_controller.set()
-                time.sleep(0.5)
-                self.calibrate_process()
-                time.sleep(0.5)
-                self.ignore_controller.clear()
+                elif self.current_mode == 'homing':
+                    # stop listening to controller to prevent program change while homing
+                    self.ignore_controller.set()
+                    time.sleep(1.5)  # wait a bit to reduce multiple homing attempts
+                    self.robot.homing('90')  # use homing method '90'
+                    # exit homing
+                    self.current_mode = 'stop'
 
-                # home robot afterwards
-                print('Switching to homing')
-                self.current_mode = 'homing'
-
-            elif self.current_mode == 'stop':
-                # stop robot after next movement and do nothing
-                time.sleep(0.0001)  # limit loop time
+                elif self.current_mode == 'stop':
+                    self.ignore_controller.clear()
+                    # stop robot after next movement and do nothing
+                    time.sleep(0.0001)  # limit loop time
