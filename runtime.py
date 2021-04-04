@@ -203,6 +203,7 @@ class Runtime:
 
             while self.current_mode == 'stop':  # stop robot after next movement and do nothing
                 self.robot.disable_steppers()
+                self.poll_program_mode()
                 first_time = True
                 while self.current_mode == 'stop':
                     if first_time:
