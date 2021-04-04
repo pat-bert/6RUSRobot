@@ -95,15 +95,15 @@ class Runtime:
         This is the manual controlling mode, where the robot can be driven with the controller.
         Exits only if the mode was changed or the program was interrupted
         """
-        time.sleep(dt)
-        inputs = controller.get_controller_inputs(self.controller)
-        new_pose = controller.get_movement_from_cont(inputs, self.robot.currPose)
+        while True:
+            time.sleep(dt)
+            inputs = controller.get_controller_inputs(self.controller)
+            new_pose = controller.get_movement_from_cont(inputs, self.robot.currPose)
 
-        # check if mode was changed
-        if not self.eval_controller_response(controller.mode_from_inputs(inputs)):
+            # check if mode was changed
+            if self.eval_controller_response(controller.mode_from_inputs(inputs)):
+                break
             self.robot.mov(new_pose)
-        else:
-            print('Exiting manual mode...')
 
     def move_demo(self):
         """
@@ -146,7 +146,6 @@ class Runtime:
         cali_step_increment = 1
 
         while True:
-            print('Calibrating...')
             time.sleep(dt)
             controls = controller.get_controller_inputs(self.controller)
             cali_mot = [0, 0, 0, 0, 0, 0]
@@ -205,7 +204,6 @@ class Runtime:
                 self.robot.enable_steppers()
 
                 if self.current_mode == 'demo':
-                    self.ignore_controller.clear()
                     self.move_demo()
                     time.sleep(2)  # wait and then execute the next function
 
@@ -236,8 +234,8 @@ class Runtime:
                     self.current_mode = self.next_mode
                     # Reset next state marker
                     self.next_mode = 'stop'
+                    self.ignore_controller.clear()
 
                 elif self.current_mode == 'stop':
-                    self.ignore_controller.clear()
                     # stop robot after next movement and do nothing
                     time.sleep(0.0001)  # limit loop time
