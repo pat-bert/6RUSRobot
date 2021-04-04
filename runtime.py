@@ -130,6 +130,7 @@ class Runtime:
         # since a homing procedure has to be done afterwards anyways
         pose_after_cali = [0, 0, 0, 0, 0, 0]
         allowed_to_change_again = True  # if the next motor can be selected
+        cali_step_increment = 1
 
         while True:
             time.sleep(dt)
@@ -154,9 +155,15 @@ class Runtime:
                 allowed_to_change_again = True
 
             if controls['UP']:
-                cali_mot[mot_num] = 1  # set 1 posivitve for selected motor
+                cali_mot[mot_num] = cali_step_increment  # set 1 posivitve for selected motor
             elif controls['DOWN']:
-                cali_mot[mot_num] = -1  # set -1 posivitve for selected motor
+                cali_mot[mot_num] = -cali_step_increment  # set -1 posivitve for selected motor
+            elif controls['LEFT'] and self.robot.stepperMode != 0:
+                # Decrement calibration step size but needs to be at least 1
+                cali_step_increment = max(1, cali_step_increment - 1)
+            elif controls['RIGHT'] and self.robot.stepperMode != 0:
+                # Increment calibration step size but needs to be <= 1/step-mode (e.g. 1/32 -> 32 inc = 1 full step)
+                cali_step_increment = min(1 / self.robot.stepperMode, cali_step_increment + 1)
 
             self.robot.mov_steps(cali_mot, pose_after_cali)
 
@@ -202,15 +209,14 @@ class Runtime:
                 self.poll_program_mode()
                 # let the program listen to the controller periodically again
 
+            first_time = True
             while self.current_mode == 'stop':  # stop robot after next movement and do nothing
                 self.robot.disable_steppers()
                 self.poll_program_mode()
-                first_time = True
-                while self.current_mode == 'stop':
-                    if first_time:
-                        print("Stopped robot!")
-                        first_time = False
-                    time.sleep(0.0001)  # limit loop time
+                if first_time:
+                    print("Stopped robot!")
+                    first_time = False
+                time.sleep(0.0001)  # limit loop time
 
             while self.current_mode == 'calibrate':
                 self.robot.enable_steppers()
