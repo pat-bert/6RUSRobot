@@ -189,6 +189,7 @@ class Runtime:
                 # listen again
                 self.ignore_controller.clear()
                 # exit homing
+                self.poll_program_mode()
                 self.current_mode = 'stop'
 
             while self.current_mode == 'manual':
