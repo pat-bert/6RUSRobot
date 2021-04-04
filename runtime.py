@@ -14,6 +14,7 @@ class Runtime:
         self.program_stopped = Event()
         self.ignore_controller = Event()
         self.current_mode = 'off'
+        self.next_mode = 'stop'
         self.controller = None
         self.already_connected = False
         self.controller_poll_rate = 5
@@ -166,8 +167,9 @@ class Runtime:
 
             self.robot.mov_steps(cali_mot, pose_after_cali)
 
-            # check if mode was changed
-            if self.eval_controller_response(controller.mode_from_inputs(controls)):
+            # check if mode was changed but do not enter the state
+            self.next_mode = controller.mode_from_inputs(controls)
+            if self.next_mode is not None and self.next_mode != 'calibrate':
                 break
 
     def loop(self):
@@ -214,10 +216,12 @@ class Runtime:
                     self.ignore_controller.set()
                     time.sleep(1.5)  # wait a bit to reduce multiple homing attempts
                     self.robot.homing('90')  # use homing method '90'
-                    # exit homing
-                    self.current_mode = 'stop'
+                    # exit homing and switch to state that stopped calibration
+                    self.current_mode = self.next_mode
+                    # Reset next state marker
+                    self.next_mode = 'stop'
+                    self.ignore_controller.clear()
 
                 elif self.current_mode == 'stop':
-                    self.ignore_controller.clear()
                     # stop robot after next movement and do nothing
                     time.sleep(0.0001)  # limit loop time
