@@ -80,14 +80,14 @@ class Runtime:
             return
 
         # Handle controller inputs all the time to keep button states up to date
-        controls = controller.get_controller_inputs(self.controller)
-
-        if not self.ignore_controller.is_set():
-            # evaluate the answer from controller
-            self.eval_controller_response(controller.mode_from_inputs(controls))
-
-        # call program again after 0.1 seconds
-        Timer(self.mode_poll_rate, self.poll_program_mode).start()
+        try:
+            controls = controller.get_controller_inputs(self.controller)
+            if not self.ignore_controller.is_set():
+                # evaluate the answer from controller
+                self.eval_controller_response(controller.mode_from_inputs(controls))
+        finally:
+            # call program again after 0.1 seconds
+            Timer(self.mode_poll_rate, self.poll_program_mode).start()
 
     def move_manual(self, dt=0.005):
         """
@@ -95,14 +95,15 @@ class Runtime:
         Exits only if the mode was changed or the program was interrupted
         """
         while True:
-            time.sleep(dt)
-            inputs = controller.get_controller_inputs(self.controller)
-            new_pose = controller.get_movement_from_cont(inputs, self.robot.currPose)
+            if controller.still_connected():
+                time.sleep(dt)
+                inputs = controller.get_controller_inputs(self.controller)
+                new_pose = controller.get_movement_from_cont(inputs, self.robot.currPose)
 
-            # check if mode was changed
-            if self.eval_controller_response(controller.mode_from_inputs(inputs)):
-                break
-            self.robot.mov(new_pose)
+                # check if mode was changed
+                if self.eval_controller_response(controller.mode_from_inputs(inputs)):
+                    break
+                self.robot.mov(new_pose)
 
     def move_demo(self):
         """
@@ -145,44 +146,45 @@ class Runtime:
         cali_step_increment = 1
 
         while True:
-            time.sleep(dt)
-            controls = controller.get_controller_inputs(self.controller)
+            if controller.still_connected():
+                time.sleep(dt)
+                controls = controller.get_controller_inputs(self.controller)
 
-            # check if mode was changed
-            if self.eval_controller_response(controller.mode_from_inputs(controls)):
-                break
+                # check if mode was changed
+                if self.eval_controller_response(controller.mode_from_inputs(controls)):
+                    break
 
-            cali_mot = [0, 0, 0, 0, 0, 0]
+                cali_mot = [0, 0, 0, 0, 0, 0]
 
-            if allowed_to_change_again:
-                # change motornumber with L1 and R1
-                if controls['L1']:
-                    mot_num -= 1
-                elif controls['R1']:
-                    mot_num += 1
+                if allowed_to_change_again:
+                    # change motornumber with L1 and R1
+                    if controls['L1']:
+                        mot_num -= 1
+                    elif controls['R1']:
+                        mot_num += 1
 
-                # check if selected motor number exists
-                if mot_num > 5:
-                    mot_num = 0
-                elif mot_num < 0:
-                    mot_num = 5
-                allowed_to_change_again = False
+                    # check if selected motor number exists
+                    if mot_num > 5:
+                        mot_num = 0
+                    elif mot_num < 0:
+                        mot_num = 5
+                    allowed_to_change_again = False
 
-            if controls['L1'] == 0 and controls['R1'] == 0:  # both buttons have to be released to switch to next motor
-                allowed_to_change_again = True
+                if controls['L1'] == 0 and controls['R1'] == 0:  # both buttons have to be released to switch to next motor
+                    allowed_to_change_again = True
 
-            if controls['UP']:
-                cali_mot[mot_num] = cali_step_increment  # set 1 posivitve for selected motor
-            elif controls['DOWN']:
-                cali_mot[mot_num] = -cali_step_increment  # set -1 posivitve for selected motor
-            elif controls['LEFT'] and self.robot.stepperMode != 0:
-                # Decrement calibration step size but needs to be at least 1
-                cali_step_increment = max(1, cali_step_increment - 1)
-            elif controls['RIGHT'] and self.robot.stepperMode != 0:
-                # Increment calibration step size but needs to be <= 1/step-mode (e.g. 1/32 -> 32 inc = 1 full step)
-                cali_step_increment = min(1 / self.robot.stepperMode, cali_step_increment + 1)
+                if controls['UP']:
+                    cali_mot[mot_num] = cali_step_increment  # set 1 posivitve for selected motor
+                elif controls['DOWN']:
+                    cali_mot[mot_num] = -cali_step_increment  # set -1 posivitve for selected motor
+                elif controls['LEFT'] and self.robot.stepperMode != 0:
+                    # Decrement calibration step size but needs to be at least 1
+                    cali_step_increment = max(1, cali_step_increment - 1)
+                elif controls['RIGHT'] and self.robot.stepperMode != 0:
+                    # Increment calibration step size but needs to be <= 1/step-mode (e.g. 1/32 -> 32 inc = 1 full step)
+                    cali_step_increment = min(1 / self.robot.stepperMode, cali_step_increment + 1)
 
-            self.robot.mov_steps(cali_mot, pose_after_cali)
+                self.robot.mov_steps(cali_mot, pose_after_cali)
 
     def loop(self):
         self.robot.homing('90')  # home robot
