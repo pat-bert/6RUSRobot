@@ -80,14 +80,14 @@ class Runtime:
             return
 
         # Handle controller inputs all the time to keep button states up to date
-        try:
+        if controller.still_connected():
             controls = controller.get_controller_inputs(self.controller)
             if not self.ignore_controller.is_set():
                 # evaluate the answer from controller
                 self.eval_controller_response(controller.mode_from_inputs(controls))
-        finally:
-            # call program again after 0.1 seconds
-            Timer(self.mode_poll_rate, self.poll_program_mode).start()
+
+        # call program again after 0.1 seconds
+        Timer(self.mode_poll_rate, self.poll_program_mode).start()
 
     def move_manual(self, dt=0.005):
         """
