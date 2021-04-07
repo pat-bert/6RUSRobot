@@ -4,19 +4,18 @@ from runtime import Runtime
 
 # main program if this file get executed
 if __name__ == '__main__':
-    while True:
-        app = Runtime()
+    app = Runtime()
 
-        try:
-            app.loop()
-        except KeyboardInterrupt:  # shutdown python program gently
-            print('Stopped with KeyboardInterrupt!')
-            break
-        except Exception:
-            continue
-        finally:
-            GPIO.cleanup()  # cleanup GPIOs (to avoid warning on next startup)
-            app.program_stopped.set()
-            # Exiting message
-            print("6-RUS program was terminated due to user-input or an error (Please wait ca. 5s)")
-            print("Please start the program again to control the robot again!")
+    try:
+        app.loop()
+    except KeyboardInterrupt:  # shutdown python program gently
+        print('Stopped with KeyboardInterrupt!')
+    except Exception as e:
+        with open('/home/pi/6RUSRobot/log.txt') as f:
+            f.write(e)
+    finally:
+        GPIO.cleanup()  # cleanup GPIOs (to avoid warning on next startup)
+        app.program_stopped.set()
+        # Exiting message
+        print("6-RUS program was terminated due to user-input or an error (Please wait ca. 5s)")
+        print("Please start the program again to control the robot again!")
