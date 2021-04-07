@@ -189,6 +189,10 @@ class Runtime:
     def loop(self):
         self.robot.homing('90')  # home robot
         self.controller = controller.init_controller()
+
+        if self.controller is None:
+            self.already_connected = False
+
         # call subroutine every 5-seconds to check for controller
         self.poll_controller_status()
         # start listening to controller
