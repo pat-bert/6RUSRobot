@@ -3,6 +3,8 @@ import time
 import types
 from threading import Event, Timer, RLock
 
+import pygame
+
 import controller
 import demo
 from SixRUS import SixRUS
@@ -86,6 +88,8 @@ class Runtime:
                 # evaluate the answer from controller
                 self.eval_controller_response(controller.mode_from_inputs(controls))
         except AttributeError:
+            pass
+        except pygame.error:
             pass
         finally:
             # call program again after 0.1 seconds
