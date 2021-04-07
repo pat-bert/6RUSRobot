@@ -22,7 +22,6 @@ def init_controller():
     try:  # check if controller is connected
         joystick = pygame.joystick.Joystick(0)  # assign the controller as joystick
         joystick.init()
-        pygame.display.init()
     except pygame.error:  # not connected
         return None
     else:

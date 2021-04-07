@@ -1,3 +1,4 @@
+import logging
 import random
 import time
 import types
@@ -198,6 +199,15 @@ class Runtime:
             self.robot.mov_steps(cali_mot, pose_after_cali)
 
     def loop(self):
+        while True:
+            try:
+                pygame.display.init()
+            except pygame.error:
+                logging.error('Could not initialize display module!')
+                continue
+            else:
+                break
+
         self.robot.homing('90')  # home robot
         self.controller = controller.init_controller()
 
