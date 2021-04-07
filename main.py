@@ -12,6 +12,8 @@ if __name__ == '__main__':
         except KeyboardInterrupt:  # shutdown python program gently
             print('Stopped with KeyboardInterrupt!')
             break
+        except Exception:
+            continue
         finally:
             GPIO.cleanup()  # cleanup GPIOs (to avoid warning on next startup)
             app.program_stopped.set()
