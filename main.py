@@ -10,9 +10,6 @@ if __name__ == '__main__':
         app.loop()
     except KeyboardInterrupt:  # shutdown python program gently
         print('Stopped with KeyboardInterrupt!')
-    except Exception as e:
-        with open('/home/pi/6RUSRobot/log.txt') as f:
-            f.write(e)
     finally:
         GPIO.cleanup()  # cleanup GPIOs (to avoid warning on next startup)
         app.program_stopped.set()
