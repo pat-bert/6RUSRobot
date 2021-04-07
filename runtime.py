@@ -85,6 +85,8 @@ class Runtime:
             if not self.ignore_controller.is_set():
                 # evaluate the answer from controller
                 self.eval_controller_response(controller.mode_from_inputs(controls))
+        except AttributeError:
+            pass
         finally:
             # call program again after 0.1 seconds
             Timer(self.mode_poll_rate, self.poll_program_mode).start()
