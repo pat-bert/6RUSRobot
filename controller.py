@@ -1,7 +1,7 @@
-import os
 import time
 from math import degrees as deg
 from math import radians as rad
+from subprocess import check_call, DEVNULL
 from threading import RLock
 from typing import Dict
 
@@ -32,7 +32,7 @@ def still_connected():
     """Checks if a Controller is still connected trough a linux command.
     `returns` boolean"""
     print('Checking connection to controller:')
-    return os.system('ls /dev/input/js0') == 0
+    return check_call(['ls', '/dev/input/js0'], stdout=DEVNULL) == 0
 
 
 def get_movement_from_cont(controls, curr_pose):

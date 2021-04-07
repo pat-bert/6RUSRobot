@@ -80,7 +80,7 @@ class Runtime:
             return
 
         # Handle controller inputs all the time to keep button states up to date
-        if controller.still_connected():
+        if self.already_connected:
             controls = controller.get_controller_inputs(self.controller)
             if not self.ignore_controller.is_set():
                 # evaluate the answer from controller
@@ -95,7 +95,7 @@ class Runtime:
         Exits only if the mode was changed or the program was interrupted
         """
         while True:
-            if controller.still_connected():
+            if self.already_connected:
                 time.sleep(dt)
                 inputs = controller.get_controller_inputs(self.controller)
                 new_pose = controller.get_movement_from_cont(inputs, self.robot.currPose)
@@ -146,7 +146,7 @@ class Runtime:
         cali_step_increment = 1
 
         while True:
-            if controller.still_connected():
+            if self.already_connected:
                 time.sleep(dt)
                 controls = controller.get_controller_inputs(self.controller)
 
