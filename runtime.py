@@ -7,11 +7,13 @@ import pygame
 
 import controller
 import demo
+from Delta import Delta
+from Quattro import Quattro
 from SixRUS import SixRUS
 
 
 class Runtime:
-    def __init__(self):
+    def __init__(self, robot: str):
         # Thread-safe event flags
         self.program_stopped = Event()
         self.ignore_controller = Event()
@@ -20,8 +22,19 @@ class Runtime:
         self.already_connected = False
         self.controller_poll_rate = 5
         self.mode_poll_rate = 0.1
-        self.robot = SixRUS(stepper_mode=1 / 32, step_delay=0.002)
         self.mode_lock = RLock()
+
+        # Preprocess string
+        robot = robot.strip().lower()
+
+        if robot == '6rus':
+            self.robot = SixRUS(stepper_mode=1 / 32, step_delay=0.002)
+        elif robot == 'quattro':
+            self.robot = Quattro(stepper_mode=1 / 32, step_delay=0.002)
+        elif robot == 'delta':
+            self.robot = Delta(stepper_mode=1 / 32, step_delay=0.002)
+        else:
+            raise ValueError("Unknown robot type.")
 
     @property
     def current_mode(self):

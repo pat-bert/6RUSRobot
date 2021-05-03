@@ -40,15 +40,17 @@ def still_connected():
         return True
 
 
-def get_movement_from_cont(controls, curr_pose):
+def get_movement_from_cont(controls, pose):
     """Calculates new pose from controller-input ans returns it as a list
     `controls`:dict  inputs from controller
     `currentPose`:list  poselist of current pose"""
-    pose = [curr_pose[0], curr_pose[1], curr_pose[2], deg(curr_pose[3]), deg(curr_pose[4]), deg(curr_pose[5])]
-
     # 0Z---> y
     # |
     # V x 
+
+    dof = len(pose)
+    if dof < 6:
+        pose += [0] * (6 - dof)
 
     # speedfactors
     rot_fac = 0.25
@@ -58,13 +60,17 @@ def get_movement_from_cont(controls, curr_pose):
     pose[0] += controls['LS_UD'] * trans_fac
     pose[1] += controls['LS_LR'] * trans_fac
     pose[2] += controls['RS_UD'] * trans_fac * -1
-    pose[3] += (controls['LEFT'] - controls['RIGHT']) * rot_fac
-    pose[4] += (controls['DOWN'] - controls['UP']) * rot_fac
-    pose[5] += (controls['L1'] - controls['R1']) * rot_fac
+
+    pose[3] = deg(pose[3]) + (controls['LEFT'] - controls['RIGHT']) * rot_fac
+    pose[4] = deg(pose[4]) + (controls['DOWN'] - controls['UP']) * rot_fac
+    pose[5] = deg(pose[5]) + (controls['L1'] - controls['R1']) * rot_fac
 
     # move pose within workingspace if its outside
     pose = check_max_val(pose, 40, 40, [-150, -60], 40, 40, 30)  # this uses degrees
-    pose = [pose[0], pose[1], pose[2], rad(pose[3]), rad(pose[4]), rad(pose[5])]  # convert to RAD
+
+    pose[3] = rad(pose[3])
+    pose[4] = rad(pose[4])
+    pose[5] = rad(pose[5])
 
     return pose
 

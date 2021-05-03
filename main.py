@@ -1,3 +1,5 @@
+from sys import argv
+
 import RPi.GPIO as GPIO
 import logging
 from runtime import Runtime
@@ -5,7 +7,7 @@ from runtime import Runtime
 # main program if this file get executed
 if __name__ == '__main__':
     logging.basicConfig(filename='log.txt', level=logging.DEBUG)
-    app = Runtime()
+    app = Runtime(argv[0])
     try:
         app.loop()
     except KeyboardInterrupt:  # shutdown python program gently
