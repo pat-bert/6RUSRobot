@@ -1,3 +1,4 @@
+import logging
 import random
 import time
 import types
@@ -10,6 +11,7 @@ import demo
 from Delta import Delta
 from Quattro import Quattro
 from SixRUS import SixRUS
+from display import LCD
 
 
 class Runtime:
@@ -23,18 +25,21 @@ class Runtime:
         self.controller_poll_rate = 5
         self.mode_poll_rate = 0.1
         self.mode_lock = RLock()
+        self.lcd = LCD()
 
         # Preprocess string
-        robot = robot.strip().lower()
+        robot_str = robot.strip().lower()
 
-        if robot == '6rus':
+        if robot_str == '6rus':
             self.robot = SixRUS(stepper_mode=1 / 32, step_delay=0.002)
-        elif robot == 'quattro':
+        elif robot_str == 'quattro':
             self.robot = Quattro(stepper_mode=1 / 32, step_delay=0.002)
-        elif robot == 'delta':
+        elif robot_str == 'delta':
             self.robot = Delta(stepper_mode=1 / 32, step_delay=0.002)
         else:
-            raise ValueError("Unknown robot type.")
+            raise ValueError(f"Unknown robot type: {robot}")
+
+        self.lcd.print_status(f'Started {robot}')
 
     @property
     def current_mode(self):
@@ -60,6 +65,7 @@ class Runtime:
 
             if self.current_mode != response:  # only print if the mode changes
                 print(f'Switching from {self.current_mode} to {response}.')
+                self.lcd.print_status(f'Status: {response}')
                 self.current_mode = response  # set robot mode to the response
                 return True
 
@@ -72,6 +78,7 @@ class Runtime:
         if not controller.still_connected():
             self.already_connected = False
             print("Please connect controller! Retrying in 5 seconds...")
+            self.lcd.print_connection(False)
         else:
             if self.already_connected:
                 # no new initialisation required here
@@ -85,6 +92,7 @@ class Runtime:
                 self.poll_program_mode()
                 self.already_connected = True
                 print('Controller connected.')
+                self.lcd.print_connection(True)
 
         # call program again after 5 seconds
         Timer(self.controller_poll_rate, self.poll_controller_status).start()
@@ -102,11 +110,15 @@ class Runtime:
                 self.eval_controller_response(controller.mode_from_inputs(controls))
         except AttributeError:
             pass
-        except pygame.error:
-            pass
+        except pygame.error as e:
+            logging.exception(e)
         finally:
             # call program again after 0.1 seconds
             Timer(self.mode_poll_rate, self.poll_program_mode).start()
+
+    def move(self, pose):
+        self.lcd.print_pose(pose)
+        self.robot.mov(pose)
 
     def move_manual(self, dt=0.005):
         """
@@ -124,7 +136,7 @@ class Runtime:
             # check if mode was changed
             if self.eval_controller_response(controller.mode_from_inputs(inputs)):
                 break
-            self.robot.mov(new_pose)
+            self.move(new_pose)
 
     def move_demo(self):
         """
@@ -145,9 +157,9 @@ class Runtime:
                     self.robot.mov_lin(coord)  # move linear
                 elif pos[6] == 'mov':
                     coord = pos[:6]  # extract only pose
-                    self.robot.mov(coord)  # move with PTP-interplation
+                    self.move(coord)  # move with PTP-interplation
             except IndexError:
-                self.robot.mov(pos)  # if 'lin' or 'mov' wasent given, use mov/PTP
+                self.move(pos)  # if 'lin' or 'mov' wasent given, use mov/PTP
 
             if not self.current_mode == 'demo':  # break if the mode was changed
                 break
