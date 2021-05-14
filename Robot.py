@@ -1,4 +1,5 @@
 import abc
+import logging
 import math as m
 import time
 
@@ -195,7 +196,7 @@ class Robot(metaclass=abc.ABCMeta):
                 t_ges = (distance / 10) / vel  # calculate duration of whole movement
                 dt_ideal = t_ges / nr_of_steps  # calculate time it should take to execute one loop iteration
             else:
-                print('Given velocity is lower than 0 or 0! Using default!')
+                logging.warning('Given velocity is lower than 0 or 0! Using default!')
 
         poses = slerp_pose(self.currPose, pose, nr_of_steps + 1)  # calculate poses in between
         t_st = time.time()  # check the time
@@ -216,7 +217,7 @@ class Robot(metaclass=abc.ABCMeta):
 
                 elif dt < -2 * self.stepDelay:  # if real time is too much behind
                     # TODO: Maybe turn on LED or something (just printing on console in this case)
-                    print('Can not keep velocity!')
+                    logging.warning('Can not keep velocity!')
 
     @abc.abstractmethod
     def inv_kinematic(self, pose: list):

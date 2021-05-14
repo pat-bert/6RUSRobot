@@ -64,7 +64,7 @@ class Runtime:
                 raise ValueError("Unknown answer from controller")
 
             if self.current_mode != response:  # only print if the mode changes
-                print(f'Switching from {self.current_mode} to {response}.')
+                logging.debug(f'Switching from {self.current_mode} to {response}.')
                 self.lcd.print_status(f'Status: {response}')
                 self.current_mode = response  # set robot mode to the response
                 return True
@@ -77,12 +77,12 @@ class Runtime:
 
         if not controller.still_connected():
             self.already_connected = False
-            print("Please connect controller! Retrying in 5 seconds...")
+            logging.info("Please connect controller! Retrying in 5 seconds...")
             self.lcd.print_connection(False)
         else:
             if self.already_connected:
                 # no new initialisation required here
-                print('Controller still connected.')
+                logging.info('Controller still connected.')
             else:
                 # stop listening as the controller gets initalised
                 self.ignore_controller.set()
@@ -91,7 +91,7 @@ class Runtime:
                 self.ignore_controller.clear()
                 self.poll_program_mode()
                 self.already_connected = True
-                print('Controller connected.')
+                logging.info('Controller connected.')
                 self.lcd.print_connection(True)
 
         # call program again after 5 seconds
@@ -262,7 +262,7 @@ class Runtime:
                     self.calibrate_process()
                     time.sleep(0.5)
                     # home robot afterwards
-                    print('Switching to homing')
+                    logging.info('Switching to homing')
                     self.current_mode = 'homing'
 
                 elif self.current_mode == 'homing':
@@ -271,7 +271,7 @@ class Runtime:
                     time.sleep(1.5)  # wait a bit to reduce multiple homing attempts
                     self.robot.homing('90')  # use homing method '90'
                     # exit homing and switch to state that stopped calibration
-                    print('Switching to stop')
+                    logging.info('Switching to stop')
                     self.current_mode = 'stop'
                     self.ignore_controller.clear()
 
