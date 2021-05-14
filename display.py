@@ -1,3 +1,4 @@
+import math
 from typing import List
 
 from RPLCD.i2c import CharLCD
@@ -60,7 +61,13 @@ class LCD:
 
             for i, (ax, val) in enumerate(zip(self.AXIS, pose)):
                 space = ' ' if i // 3 == 0 else ''
-                rows[i % 3] += f'{ax}{val:+0{self.WIDTH}.{self.POST_DECIMAL_PLACE}f}{space}'
+
+                if i >= 3:
+                    unit = '°'
+                    val = math.degrees(val)
+                else:
+                    unit = 'mm'
+                rows[i % 3] += f'{ax}{val:+0{self.WIDTH}.{self.POST_DECIMAL_PLACE}f}{unit}{space}'
 
             display_str = '\r\n'.join(rows)
 
