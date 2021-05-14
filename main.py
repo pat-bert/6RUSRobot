@@ -8,7 +8,7 @@ from runtime import Runtime
 # main program if this file get executed
 if __name__ == '__main__':
     logging.basicConfig(
-        filename='log.txt', level=logging.DEBUG,
+        level=logging.DEBUG,
         format='%(asctime)-15s %(threadName)-15s %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s'
     )
 

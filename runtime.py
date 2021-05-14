@@ -89,7 +89,6 @@ class Runtime:
                 # init new joystick since the controller was reconnected or connected the first time
                 self.controller = controller.init_controller()
                 self.ignore_controller.clear()
-                self.poll_program_mode()
                 self.already_connected = True
                 logging.info('Controller connected.')
                 self.lcd.print_connection(True)
