@@ -3,7 +3,7 @@
 sudo apt-get install libatlas-base-dev -y
 
 # Install python dependencies
-python3 -m pip install ./6RUSRobot/requirements.txt
+python3 -m pip install -r requirements.txt
 
 # Create autostart directory
 sudo mkdir /home/pi/.config/autostart/ -p
