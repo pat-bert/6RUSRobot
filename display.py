@@ -63,11 +63,11 @@ class LCD:
                 space = ' ' if i // 3 == 0 else ''
 
                 if i >= 3:
-                    unit = '°'
+                    unit = chr(223)
                     val = math.degrees(val)
                 else:
                     unit = 'mm'
-                rows[i % 3] += f'{ax}{val:+0{self.WIDTH}.{self.POST_DECIMAL_PLACE}f}{unit}{space}'
+                rows[i % 3] += f'{ax}{val:+0{self.WIDTH}.{self.POST_DECIMAL_PLACE}f} {unit}{space}'
 
             display_str = '\r\n'.join(rows)
 
