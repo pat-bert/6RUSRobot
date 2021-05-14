@@ -262,6 +262,7 @@ class Runtime:
                     time.sleep(0.5)
                     # home robot afterwards
                     logging.info('Switching to homing')
+                    self.lcd.print_status(f'Status: homing')
                     self.current_mode = 'homing'
 
                 elif self.current_mode == 'homing':
@@ -271,6 +272,7 @@ class Runtime:
                     self.robot.homing('90')  # use homing method '90'
                     # exit homing and switch to state that stopped calibration
                     logging.info('Switching to stop')
+                    self.lcd.print_status(f'Status: stop')
                     self.current_mode = 'stop'
                     self.ignore_controller.clear()
 
