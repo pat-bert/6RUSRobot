@@ -66,8 +66,8 @@ class LCD:
                     unit = chr(223)
                     val = math.degrees(val)
                 else:
-                    unit = 'mm'
-                rows[i % 3] += f'{ax}{val:+0{self.WIDTH}.{self.POST_DECIMAL_PLACE}f} {unit}{space}'
+                    unit = ' mm'
+                rows[i % 3] += f'{ax}{val:+0{self.WIDTH}.{self.POST_DECIMAL_PLACE}f}{unit}{space}'
 
             display_str = '\r\n'.join(rows)
 
