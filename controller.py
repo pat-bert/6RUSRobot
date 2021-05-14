@@ -1,3 +1,4 @@
+import logging
 import time
 from math import degrees as deg
 from math import radians as rad
@@ -31,12 +32,13 @@ def init_controller():
 def still_connected():
     """Checks if a Controller is still connected trough a linux command.
     `returns` boolean"""
-    print('Checking connection to controller:')
     try:
         check_call(['ls', '/dev/input/js0'], stdout=DEVNULL)
     except CalledProcessError:
+        logging.debug('Checking connection to controller: Disconnected')
         return False
     else:
+        logging.debug('Checking connection to controller: Connected')
         return True
 
 
