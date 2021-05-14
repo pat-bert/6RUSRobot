@@ -10,6 +10,10 @@ class LCD:
     # Sign + Decimal Point + Digits before + Digits after
     WIDTH = 1 + 1 * (PRE_DECIMAL_PLACE > 0) + PRE_DECIMAL_PLACE + POST_DECIMAL_PLACE
 
+    SW_I2C_PORT = 11
+    SW_I2C_SDA = 23
+    SW_I2C_SCL = 24
+
     CONNECTED_CHAR = 0
     DISCONNECTED_CHAR = 1
 
@@ -39,7 +43,7 @@ class LCD:
         # Adress and port expander type are fixed
         # Hide the specific implementation used
         try:
-            self._lcd = CharLCD('PCF8574', 0x26)
+            self._lcd = CharLCD('PCF8574', 0x26, port=self.SW_I2C_PORT)
         except Exception:
             self.connected = False
         else:
