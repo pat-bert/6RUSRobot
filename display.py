@@ -81,7 +81,13 @@ class LCD:
     def print_status(self, status: str):
         if self.connected:
             self._lcd.home()
-            self._lcd.write_string(status[:19])
+
+            if len(status) > 18:
+                status = status[:19]
+            else:
+                status += ' ' * (18 - len(status))
+
+            self._lcd.write_string(status)
 
     def __del__(self):
         if self.connected:
