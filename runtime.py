@@ -124,18 +124,21 @@ class Runtime:
         This is the manual controlling mode, where the robot can be driven with the controller.
         Exits only if the mode was changed or the program was interrupted
         """
-        while True:
-            time.sleep(dt)
-            try:
-                inputs = controller.get_controller_inputs(self.controller)
-            except AttributeError:
-                continue
-            new_pose = controller.get_movement_from_cont(inputs, self.robot.currPose)
+        # stop listening to controller (bc. we listen all the time in here)
+        self.ignore_controller.set()
 
-            # check if mode was changed
-            if self.eval_controller_response(controller.mode_from_inputs(inputs)):
-                break
-            self.move(new_pose)
+        time.sleep(dt)
+        try:
+            inputs = controller.get_controller_inputs(self.controller)
+        except AttributeError:
+            return
+        new_pose = controller.get_movement_from_cont(inputs, self.robot.currPose)
+
+        # check if mode was changed
+        if self.eval_controller_response(controller.mode_from_inputs(inputs)):
+            self.ignore_controller.clear()
+
+        self.move(new_pose)
 
     def move_demo(self):
         """
@@ -234,8 +237,7 @@ class Runtime:
         self.ignore_controller.clear()
         self.poll_program_mode()
 
-        # infinite loop only breaks on Keyboard-Interrupt
-        while True:
+        while not self.program_stopped.is_set():
             # State Machine
             if self.current_mode == 'off':
                 self.robot.disable_steppers()
@@ -245,14 +247,11 @@ class Runtime:
 
                 if self.current_mode == 'demo':
                     self.move_demo()
-                    time.sleep(2)  # wait and then execute the next function
+                    time.sleep(2)
 
                 elif self.current_mode == 'manual':
                     # control the robot with the controller
-                    # stop listening to controller (bc. we listen all the time in here)
-                    self.ignore_controller.set()
                     self.move_manual()
-                    self.ignore_controller.clear()
 
                 elif self.current_mode == 'calibrate':
                     # stop listening to controller (bc. we listen all the time in here)

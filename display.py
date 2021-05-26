@@ -6,11 +6,15 @@ from RPLCD.i2c import CharLCD
 
 
 class LCD:
+    # Guard critical sections with shared class-lock
+    LOCK = Lock()
     AXIS = 'XYZABC'
+
     POST_DECIMAL_PLACE = 1
     PRE_DECIMAL_PLACE = 3
     # Sign + Decimal Point + Digits before + Digits after
     WIDTH = 1 + 1 * (PRE_DECIMAL_PLACE > 0) + PRE_DECIMAL_PLACE + POST_DECIMAL_PLACE
+    STATUS_LEN = 18
 
     SW_I2C_PORT = 11
     SW_I2C_SDA = 23
@@ -44,7 +48,6 @@ class LCD:
     def __init__(self):
         # Adress and port expander type are fixed
         # Hide the specific implementation used
-        self.lock = Lock()
         try:
             self._lcd = CharLCD('PCF8574', 0x26, port=self.SW_I2C_PORT)
         except Exception:
@@ -58,31 +61,34 @@ class LCD:
         """
         Prints a pose on the lower three rows of the display
         """
-        with self.lock:
-            if self.connected:
-                rows = 3 * ['']
+        if self.connected:
+            rows = 3 * ['']
 
-                for i, (ax, val) in enumerate(zip(self.AXIS, pose)):
-                    space = ' ' if i // 3 == 0 else ''
+            for i, (ax, val) in enumerate(zip(self.AXIS, pose)):
+                if i >= 3:
+                    space = ' '
+                    unit = chr(223)
+                    val = math.degrees(val)
+                else:
+                    space = ''
+                    unit = ' mm'
 
-                    if i >= 3:
-                        unit = chr(223)
-                        val = math.degrees(val)
-                    else:
-                        unit = ' mm'
-                    rows[i % 3] += f'{ax}{val:+0{self.WIDTH}.{self.POST_DECIMAL_PLACE}f}{unit}{space}'
+                rows[i % 3] += f'{ax}{val:+0{self.WIDTH}.{self.POST_DECIMAL_PLACE}f}{unit}{space}'
 
-                display_str = '\r\n'.join(rows)
+            display_str = '\r\n'.join(rows)
 
+            # Critical section
+            with self.LOCK:
                 # Set cursor to start of second row and write positions
                 self._lcd.cursor_pos = (1, 0)
                 self._lcd.write_string(display_str)
 
     def print_connection(self, is_connected: bool):
-        with self.lock:
-            if self.connected:
+        if self.connected:
+            # Critical section
+            with self.LOCK:
                 # Move cursor to upper right corner
-                self._lcd.cursor_pos = (0, 19)
+                self._lcd.cursor_pos = (0, self.STATUS_LEN + 1)
 
                 if is_connected:
                     self._lcd.write_string(chr(self.CONNECTED_CHAR))
@@ -90,18 +96,22 @@ class LCD:
                     self._lcd.write_string(chr(self.DISCONNECTED_CHAR))
 
     def print_status(self, status: str):
-        with self.lock:
-            if self.connected:
+        if self.connected:
+            # Critical section
+            with self.LOCK:
                 self._lcd.home()
 
-                if len(status) > 18:
-                    status = status[:19]
-                else:
-                    status += ' ' * (18 - len(status))
+            if len(status) > self.STATUS_LEN:
+                status = status[:self.STATUS_LEN + 1]
+            else:
+                status += ' ' * (self.STATUS_LEN - len(status))
 
+            # Critical section
+            with self.LOCK:
                 self._lcd.write_string(status)
 
     def __del__(self):
-        with self.lock:
-            if self.connected:
+        if self.connected:
+            # Critical section
+            with self.LOCK:
                 self._lcd.close()
