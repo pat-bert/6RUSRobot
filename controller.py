@@ -67,9 +67,6 @@ def get_movement_from_cont(controls, pose):
     pose[4] = deg(pose[4]) + (controls['DOWN'] - controls['UP']) * rot_fac
     pose[5] = deg(pose[5]) + (controls['L1'] - controls['R1']) * rot_fac
 
-    # move pose within workingspace if its outside
-    pose = check_max_val(pose, 40, 40, [-150, -60], 40, 40, 30)  # this uses degrees
-
     pose[3] = rad(pose[3])
     pose[4] = rad(pose[4])
     pose[5] = rad(pose[5])

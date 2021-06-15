@@ -1,4 +1,4 @@
-from math import sqrt, atan2, pi, atan
+from math import sqrt, atan2, pi
 
 import numpy as np
 from scipy.optimize import fsolve
@@ -51,7 +51,7 @@ class Delta(Robot):
             if abs(theta1) <= pi / 2:
                 thetas.append(theta1)
             else:
-                theta2 = 2 * atan((-F - p) / denom)
+                theta2 = 2 * atan2((-F - p), denom)
                 thetas.append(theta2)
 
         return thetas

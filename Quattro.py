@@ -1,4 +1,4 @@
-from math import atan2, sqrt, cos, sin, pi, atan
+from math import atan2, sqrt, cos, sin, pi
 
 import numpy as np
 from scipy.optimize import fsolve
@@ -41,8 +41,8 @@ class Quattro(Robot):
         H = [
             q + (a * c_phi) ** 2 - 2 * a * c_phi * (x + R) + 2 * x * R,
             q + (a * s_phi) ** 2 - 2 * a * s_phi * (y + R) + 2 * y * R,
-            q + (a * c_phi) ** 2 - 2 * a * c_phi * (x - R) - 2 * x * R,
-            q + (a * s_phi) ** 2 - 2 * a * s_phi * (y - R) - 2 * y * R,
+            q + (a * c_phi) ** 2 + 2 * a * c_phi * (x - R) - 2 * x * R,
+            q + (a * s_phi) ** 2 + 2 * a * s_phi * (y - R) + 2 * y * R,
         ]
 
         F = - 2 * z * l1
@@ -58,7 +58,7 @@ class Quattro(Robot):
             if abs(theta1) <= pi / 2:
                 thetas.append(theta1)
             else:
-                theta2 = 2 * atan((-F - p) / denom)
+                theta2 = 2 * atan2((-F - p), denom)
                 thetas.append(theta2)
 
         return thetas
@@ -82,7 +82,7 @@ class Quattro(Robot):
         # (first arm is pointing downward, pythagoras for second arm and effector/base radii)
         R, a, l1, l2 = self.geometricParams
         z = -l1 - sqrt(l2 ** 2 - (R - a / sqrt(2)) ** 2)
-        x_0 = np.array([0.0, 0.0, z, pi / 4])
+        x_0 = np.array([0.0, 0.0, -z, pi / 4])
 
         curr_pose = fsolve(func, x_0)  # solve numerically with initial guess
 
