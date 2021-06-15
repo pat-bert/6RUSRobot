@@ -18,6 +18,7 @@ class Delta(Robot):
 
     def inv_kinematic(self, pose: list):
         R, r, l1, l2 = self.geometricParams
+        a = R - r
 
         # Cartesian target
         x = float(pose[0])
@@ -26,16 +27,16 @@ class Delta(Robot):
 
         # Auxiliary variables
         G = [
-            l1 * (x + sqrt(3) * y),
-            2 * l1 * (y + r),
-            - l1 * (sqrt(3) * r - x + sqrt(3) * y)
+            l1 * (2 * a + y + sqrt(3) * x),
+            2 * l1 * (y + a),
+            l1 * (2 * a - y + sqrt(3) * x)
         ]
 
-        q = x ** 2 + y ** 2 + z ** 2 + l1 ** 2 + r ** 2 - l2 ** 2
+        q = x ** 2 + y ** 2 + z ** 2 + l1 ** 2 + a ** 2 - l2 ** 2
         H = [
-            q + r * (sqrt(3) * x - y),
-            q + 2 * r * y,
-            q - r * (sqrt(3) * x + y)
+            q + a * (sqrt(3) * x - y),
+            q + 2 * a * y,
+            q - a * (sqrt(3) * x + y)
         ]
 
         F = - 2 * z * l1
@@ -43,8 +44,8 @@ class Delta(Robot):
         # Calculate driven joint angles
         thetas = []
         for i in range(3):
-            denom = 2 * (G[i] + H[i])
-            p = sqrt(F ** 2 - denom ** 2)
+            denom = H[i] - G[i]
+            p = sqrt(F ** 2 - H[i] ** 2 + G[i] ** 2)
             theta1 = 2 * atan2((-F + p), denom)
 
             # Pick solution with arms pointing outwards
@@ -83,3 +84,48 @@ class Delta(Robot):
 
     def change_robot_dimensions(self, R, r, l1, l2, *_):
         self.geometricParams = [R, r, l1, l2]
+
+
+if __name__ == '__main__':
+    R, r, l1, l2 = [41.7, 27.6, 48.6, 166.8]
+    a = R - r
+
+    # Cartesian target
+    x = 0
+    y = 0
+    z = l1 + sqrt(l2 ** 2 - a ** 2)
+
+    # Auxiliary variables
+    G = [
+        l1 * (2 * a + y + sqrt(3) * x),
+        2 * l1 * (y + a),
+        l1 * (2 * a + sqrt(3) * x - y)
+    ]
+
+    q = x ** 2 + y ** 2 + z ** 2 + l1 ** 2 + a ** 2 - l2 ** 2
+    H = [
+        q + a * (sqrt(3) * x - y),
+        q + 2 * a * y,
+        q - a * (sqrt(3) * x + y)
+    ]
+
+    F = - 2 * z * l1
+
+    # Calculate driven joint angles
+    thetas = []
+    for i in range(3):
+        denom = H[i] - G[i]
+        try:
+            p = sqrt(F ** 2 - H[i] ** 2 + G[i] ** 2)
+        except ValueError:
+            continue
+        theta1 = 2 * atan2((-F + p), denom)
+
+        # Pick solution with arms pointing outwards
+        if abs(theta1) <= pi / 2:
+            thetas.append(theta1)
+        else:
+            theta2 = 2 * atan2((-F - p), denom)
+            thetas.append(theta2)
+
+    print(thetas)
