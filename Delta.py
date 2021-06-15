@@ -3,7 +3,7 @@ from math import sqrt, atan2, pi
 import numpy as np
 from scipy.optimize import fsolve
 
-from Robot import Robot
+from Robot import Robot, WorkspaceViolation
 
 
 class Delta(Robot):
@@ -45,7 +45,10 @@ class Delta(Robot):
         thetas = []
         for i in range(3):
             denom = H[i] - G[i]
-            p = sqrt(F ** 2 - H[i] ** 2 + G[i] ** 2)
+            try:
+                p = sqrt(F ** 2 - H[i] ** 2 + G[i] ** 2)
+            except ValueError as e:
+                raise WorkspaceViolation from e
             theta1 = 2 * atan2((-F + p), denom)
 
             # Pick solution with arms pointing outwards

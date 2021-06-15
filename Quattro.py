@@ -3,7 +3,7 @@ from math import atan2, sqrt, cos, sin, pi
 import numpy as np
 from scipy.optimize import fsolve
 
-from Robot import Robot
+from Robot import Robot, WorkspaceViolation
 
 
 class Quattro(Robot):
@@ -51,7 +51,10 @@ class Quattro(Robot):
         thetas = []
         for i in range(4):
             denom = H[i] - G[i]
-            p = sqrt(F ** 2 - H[i] ** 2 + G[i] ** 2)
+            try:
+                p = sqrt(F ** 2 - H[i] ** 2 + G[i] ** 2)
+            except ValueError as e:
+                raise WorkspaceViolation from e
             theta1 = 2 * atan2((-F + p), denom)
 
             # Pick solution with arms pointing outwards
