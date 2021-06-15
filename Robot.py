@@ -10,6 +10,10 @@ import stepper
 from slerp import slerp_pose, angle_to_turn
 
 
+class WorkspaceViolation(ValueError):
+    pass
+
+
 class Robot(metaclass=abc.ABCMeta):
     DIR_PINS = [13, 5, 9, 22, 17, 3]
     STEP_PINS = [6, 11, 10, 27, 4, 2]
@@ -202,8 +206,10 @@ class Robot(metaclass=abc.ABCMeta):
         t_st = time.time()  # check the time
 
         for i, poseBetw in enumerate(poses):
-
-            self.mov(poseBetw)  # go to next pose
+            try:
+                self.mov(poseBetw)  # go to next pose
+            except WorkspaceViolation:
+                break
             self.currPose = poseBetw  # update Pose
 
             # Velocity management

@@ -1,6 +1,5 @@
-import time
 from math import sin, cos, sqrt
-import RPi.GPIO as GPIO
+
 import numpy as np
 from scipy.optimize import fsolve
 
@@ -24,7 +23,7 @@ class SixRUS(Robot):
         # Robot-Dimensions [mm]  (Hardcoded but can be changed via a function)
         # [l1, l2, dx, dy, Dx, Dy]  (more Infos in documentation)
         # self.geometricParams = [57.0, 92.0, 11.0, 9.5, 63.0, 12.0]  # small endeffector
-        self.geometricParams = [57.0, 92.0, 29.5, 12.5, 63.0, 12.0]  # big endeffector
+        self.geometricParams = [58.0, 200.0, 23.6, 12.5, 50.0, 12.5]  # big endeffector
 
     # KINEMATICS
     def inv_kinematic(self, pose: list):
@@ -44,14 +43,7 @@ class SixRUS(Robot):
         gamma = float(pose[5])
 
         # Use given Robot dimensions
-        geometic_params = self.geometricParams
-
-        l1 = geometic_params[0]
-        l2 = geometic_params[1]
-        dx = geometic_params[2]
-        dy = geometic_params[3]
-        Dx = geometic_params[4]
-        Dy = geometic_params[5]
+        l1, l2, dx, dy, Dx, Dy = self.geometricParams
 
         j = complex(0, 1)  # define complex numer (0 + i)
 
@@ -115,7 +107,10 @@ class SixRUS(Robot):
             return difference
 
         # initial guess/startingvalue
-        x_0 = np.array([0.0, 0.0, -130.0, 0.0, 0.0, 0.0])
+        # (first arm is pointing downward, pythagoras for second arm and effector/base radii)
+        l1, l2, dx, dy, Dx, Dy = self.geometricParams
+        z = -l1 - sqrt(l2 ** 2 - (Dx - dx) ** 2)
+        x_0 = np.array([0.0, 0.0, z, 0.0, 0.0, 0.0])
 
         curr_pose = fsolve(func, x_0)  # solve numerically with initial guess
 
@@ -126,25 +121,3 @@ class SixRUS(Robot):
         This has to be done before homing or moving of the robot.
         See the documentation for the kinematics to see which values belong to which robot dimension"""
         self.geometricParams = [l1, l2, dx, dy, Dx, Dy]
-
-
-if __name__ == '__main__':
-    # Example Code if this file gets executed directly
-    robo = SixRUS(stepper_mode=1 / 32, step_delay=0.001)  # initialise robot
-    robo.homing('90')  # homing of robot with method ‘90’
-
-    print('Homingpose: ', robo.currPose)
-
-    # define two poses
-    pose1 = [0, 0, -90, 0, 0, 0]
-    pose2 = [0, 0, -127, 0, 0, 0]
-
-    robo.mov(pose1)  # move to first pose (PTP)
-    time.sleep(.5)  # wait 0.5 seconds
-
-    robo.mov(pose2)  # move to second pose (PTP)
-    time.sleep(.5)
-
-    robo.mov(pose1)  # move to first pose again
-
-    GPIO.cleanup()  # cleanup GPIO-Pins

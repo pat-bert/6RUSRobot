@@ -10,6 +10,7 @@ import controller
 import demo
 from Delta import Delta
 from Quattro import Quattro
+from Robot import WorkspaceViolation
 from SixRUS import SixRUS
 from display import LCD
 
@@ -116,8 +117,12 @@ class Runtime:
             Timer(self.mode_poll_rate, self.poll_program_mode).start()
 
     def move(self, pose):
-        self.lcd.print_pose(pose)
-        self.robot.mov(pose)
+        try:
+            self.robot.mov(pose)
+        except WorkspaceViolation:
+            pass
+        else:
+            self.lcd.print_pose(pose)
 
     def move_manual(self, dt=0.005):
         """
