@@ -76,7 +76,7 @@ class Delta(Robot):
         # (first arm is pointing downward, pythagoras for second arm and effector/base radii)
         R, r, l1, l2 = self.geometricParams
         z = l1 + sqrt(l2 ** 2 - (R - r) ** 2)
-        x_0 = np.array([0.0, 0.0, z, pi / 4])
+        x_0 = np.array([0.0, 0.0, z])
 
         curr_pose = fsolve(func, x_0)  # solve numerically with initial guess
 
