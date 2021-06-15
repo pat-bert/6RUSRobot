@@ -114,7 +114,7 @@ class Robot(metaclass=abc.ABCMeta):
 
         # compensate for motor placement (switch direction every second motor)
         rotation_compensation = np.array([1, -1, 1, -1, 1, -1])
-        mov_vec = np.multiply(mov_vec, rotation_compensation)
+        mov_vec = np.multiply(mov_vec, rotation_compensation[:self.dof])
 
         step_count = np.zeros(self.dof, dtype=int)  # step counter for calculating on wich loop to move
 
