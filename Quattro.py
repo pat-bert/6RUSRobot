@@ -42,7 +42,7 @@ class Quattro(Robot):
             q + (a * c_phi) ** 2 - 2 * a * c_phi * (x + R) + 2 * x * R,
             q + (a * s_phi) ** 2 - 2 * a * s_phi * (y + R) + 2 * y * R,
             q + (a * c_phi) ** 2 + 2 * a * c_phi * (x - R) - 2 * x * R,
-            q + (a * s_phi) ** 2 + 2 * a * s_phi * (y - R) + 2 * y * R,
+            q + (a * s_phi) ** 2 + 2 * a * s_phi * (y - R) - 2 * y * R,
         ]
 
         F = - 2 * z * l1
@@ -50,8 +50,8 @@ class Quattro(Robot):
         # Calculate driven joint angles
         thetas = []
         for i in range(4):
-            denom = 2 * (G[i] + H[i])
-            p = sqrt(F ** 2 - denom ** 2)
+            denom = H[i] - G[i]
+            p = sqrt(F ** 2 - H[i] ** 2 + G[i] ** 2)
             theta1 = 2 * atan2((-F + p), denom)
 
             # Pick solution with arms pointing outwards
@@ -81,7 +81,7 @@ class Quattro(Robot):
         # initial guess/startingvalue
         # (first arm is pointing downward, pythagoras for second arm and effector/base radii)
         R, a, l1, l2 = self.geometricParams
-        z = -l1 - sqrt(l2 ** 2 - (R - a / sqrt(2)) ** 2)
+        z = l1 + sqrt(l2 ** 2 - (R - a / sqrt(2)) ** 2)
         x_0 = np.array([0.0, 0.0, -z, pi / 4])
 
         curr_pose = fsolve(func, x_0)  # solve numerically with initial guess
@@ -90,3 +90,54 @@ class Quattro(Robot):
 
     def change_robot_dimensions(self, R, a, l1, l2, *_):
         self.geometricParams = [R, a, l1, l2]
+
+
+if __name__ == '__main__':
+    R, a, l1, l2 = [55.6, 39.3, 75.8, 166.8]
+
+    # Cartesian target
+    x = 0
+    y = 0
+    z = l1 + sqrt(l2 ** 2 - (R - a / sqrt(2)) ** 2) - 20
+    phi = pi/4
+
+    # Calculate trigonometrics only once
+    c_phi = cos(phi)
+    s_phi = sin(phi)
+
+    # Auxiliary variables
+    G = [
+        2 * l1 * (x - a * c_phi + R),
+        2 * l1 * (y - a * s_phi + R),
+        2 * l1 * (-x - a * c_phi + R),
+        2 * l1 * (-y - a * s_phi + R)
+    ]
+
+    q = x ** 2 + y ** 2 + z ** 2 + l1 ** 2 + R ** 2 - l2 ** 2
+    H = [
+        q + (a * c_phi) ** 2 - 2 * a * c_phi * (x + R) + 2 * x * R,
+        q + (a * s_phi) ** 2 - 2 * a * s_phi * (y + R) + 2 * y * R,
+        q + (a * c_phi) ** 2 + 2 * a * c_phi * (x - R) - 2 * x * R,
+        q + (a * s_phi) ** 2 + 2 * a * s_phi * (y - R) - 2 * y * R,
+    ]
+
+    F = - 2 * z * l1
+
+    # Calculate driven joint angles
+    thetas = []
+    for i in range(4):
+        denom = H[i] - G[i]
+        try:
+            p = sqrt(F ** 2 - H[i] ** 2 + G[i] ** 2)
+        except ValueError:
+            continue
+        theta1 = 2 * atan2((-F + p), denom)
+
+        # Pick solution with arms pointing outwards
+        if abs(theta1) <= pi / 2:
+            thetas.append(theta1)
+        else:
+            theta2 = 2 * atan2((-F - p), denom)
+            thetas.append(theta2)
+
+    print(thetas)
