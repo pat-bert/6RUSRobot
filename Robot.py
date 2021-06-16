@@ -18,7 +18,7 @@ class Robot(metaclass=abc.ABCMeta):
     DIR_PINS = [13, 5, 9, 22, 17, 3]
     STEP_PINS = [6, 11, 10, 27, 4, 2]
 
-    def __init__(self, dof, stepper_mode, steps_per_rev, step_delay):
+    def __init__(self, dof, stepper_mode, steps_per_rev, step_delay, rot_comp):
         self.dof = dof
 
         # Robot GPIO-pins:
@@ -28,6 +28,7 @@ class Robot(metaclass=abc.ABCMeta):
         self.dirPins = self.DIR_PINS[:dof]
         self.stepPins = self.STEP_PINS[:dof]
         self.enablePin = 0
+        self.rotation_compensation = rot_comp
 
         self.currPose = [0.0] * dof  # current pose of the robot: [x, y, z, alpha, beta, gamma]
         self.currSteps = [0] * dof  # current motorangles as steps #TODO: this varriable is not updated yet
@@ -114,9 +115,7 @@ class Robot(metaclass=abc.ABCMeta):
         mov_vec = np.array(step_list)  # convert to np.array for vector calculations
 
         # compensate for motor placement (switch direction every second motor)
-        rotation_compensation = np.array([1, -1, 1, -1, 1, -1])
-        rotation_compensation = rotation_compensation[:self.dof]
-        mov_vec = np.multiply(mov_vec, rotation_compensation)
+        mov_vec = np.multiply(mov_vec, self.rotation_compensation)
 
         step_count = np.zeros(self.dof, dtype=int)  # step counter for calculating on wich loop to move
 

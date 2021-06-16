@@ -8,7 +8,8 @@ from Robot import Robot, WorkspaceViolation
 
 class Delta(Robot):
     def __init__(self, stepper_mode=1 / 32, steps_per_rev=200, step_delay=0.0208):
-        super().__init__(dof=3, stepper_mode=stepper_mode, steps_per_rev=steps_per_rev, step_delay=step_delay)
+        super().__init__(dof=3, stepper_mode=stepper_mode, steps_per_rev=steps_per_rev, step_delay=step_delay,
+                         rot_comp=np.array([-1] * 3))
         # [R, r, l1, l2]
         # R - distance from base center to driven joints
         # r - distance from end-effector center to joints

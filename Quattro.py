@@ -8,7 +8,8 @@ from Robot import Robot, WorkspaceViolation
 
 class Quattro(Robot):
     def __init__(self, stepper_mode=1 / 32, steps_per_rev=200, step_delay=0.0208):
-        super().__init__(dof=4, stepper_mode=stepper_mode, steps_per_rev=steps_per_rev, step_delay=step_delay)
+        super().__init__(dof=4, stepper_mode=stepper_mode, steps_per_rev=steps_per_rev, step_delay=step_delay,
+                         rot_comp=np.array([-1] * 4))
         # [R, a, l1, l2]
         # R - distance from base center to driven joints
         # a - length of an end-effector bar
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     x = 0
     y = 0
     z = l1 + sqrt(l2 ** 2 - (R - a / sqrt(2)) ** 2) - 20
-    phi = pi/4
+    phi = pi / 4
 
     # Calculate trigonometrics only once
     c_phi = cos(phi)
