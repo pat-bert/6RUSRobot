@@ -108,13 +108,15 @@ class Robot(metaclass=abc.ABCMeta):
         `newPose`:list is the pose after the movement was done
         """
         new_pose = new_pose[:self.dof]
+        step_list = step_list[:self.dof]
 
         # movVec = np.array([2, -5, 1, -10, 0, 0])
         mov_vec = np.array(step_list)  # convert to np.array for vector calculations
 
         # compensate for motor placement (switch direction every second motor)
         rotation_compensation = np.array([1, -1, 1, -1, 1, -1])
-        mov_vec = np.multiply(mov_vec, rotation_compensation[:self.dof])
+        rotation_compensation = rotation_compensation[:self.dof]
+        mov_vec = np.multiply(mov_vec, rotation_compensation)
 
         step_count = np.zeros(self.dof, dtype=int)  # step counter for calculating on wich loop to move
 
