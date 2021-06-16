@@ -120,7 +120,7 @@ class Runtime:
         try:
             self.robot.mov(pose)
         except WorkspaceViolation:
-            pass
+            logging.debug(f"Cannot move to pose:{pose}")
         else:
             self.lcd.print_pose(pose)
 

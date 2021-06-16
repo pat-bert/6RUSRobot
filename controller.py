@@ -54,6 +54,9 @@ def get_movement_from_cont(controls, pose):
     if dof < 6:
         pose += [0] * (6 - dof)
 
+    # Create a copy so we do not save state here
+    pose = list(pose)
+
     # speedfactors
     rot_fac = 0.25
     trans_fac = 1
