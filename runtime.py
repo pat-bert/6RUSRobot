@@ -207,10 +207,10 @@ class Runtime:
                     mot_num += 1
 
                 # check if selected motor number exists
-                if mot_num > 5:
+                if mot_num > self.robot.dof - 1:
                     mot_num = 0
                 elif mot_num < 0:
-                    mot_num = 5
+                    mot_num = self.robot.dof - 1
                 allowed_to_change_again = False
 
             if controls['L1'] == 0 and controls['R1'] == 0:  # both buttons have to be released to switch to next motor
